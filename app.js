@@ -1,5 +1,5 @@
-// GANTI DENGAN URL WEB APP ANDA
-const API_URL = "https://script.google.com/macros/s/AKfycbyodqjlUtAxHpIUi5S9sw5G8dc_kvLqnkJ7TlSUgHJDOEBashqQuxslfklPpaTdyiBG/exec";
+// GANTI DENGAN URL WEB APP HASIL DEPLOY TERBARU ANDA
+const API_URL = "https://script.google.com/macros/s/AKfycbzmZgWuC1BEk2C57JIrFC_0aAtly8D93NHf-sN5mXYr5LjSDCHmCItwzUWOTX1YB87e/exec";
 
 let masterData = [];
 
@@ -14,10 +14,7 @@ async function fetchData() {
         const response = await fetch(API_URL);
         const data = await response.json();
         
-        if (data.error) {
-            alert("Error: " + data.error);
-            return;
-        }
+        if (data.error) throw new Error(data.error);
 
         masterData = data;
         
@@ -28,7 +25,7 @@ async function fetchData() {
         document.getElementById('last-update').innerText = `Terakhir update: ${new Date().toLocaleTimeString()}`;
     } catch (error) {
         console.error("Gagal load data:", error);
-        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">Gagal mengambil data dari Google Sheets. Periksa koneksi atau URL API.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Data Gagal Dimuat: ${error.message}</td></tr>`;
     } finally {
         loading.classList.add('hidden');
         tbody.classList.remove('hidden');
@@ -39,15 +36,20 @@ function renderTable(data) {
     const tbody = document.getElementById('main-table-body');
     tbody.innerHTML = '';
 
+    if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-slate-400">Tidak ada pesanan pending ditemukan.</td></tr>`;
+        return;
+    }
+
     data.forEach(item => {
         const apoClass = item.status_apo === 'NEW' ? 'bg-red-100 text-red-700' : 
-                         item.status_apo === 'PROSES' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
+                         (item.status_apo === 'PROSES' || item.status_apo === 'PACKING') ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
 
-        const row = `
+        tbody.insertAdjacentHTML('beforeend', `
             <tr class="border-b border-slate-100 hover:bg-slate-50 transition text-sm">
                 <td class="p-4">
                     <div class="font-bold text-slate-900">${item.toko}</div>
-                    <div class="text-xs text-slate-500 uppercase">${item.wilayah}</div>
+                    <div class="text-[10px] text-slate-500 uppercase font-semibold">${item.wilayah}</div>
                 </td>
                 <td class="p-4 font-medium">${item.nama}</td>
                 <td class="p-4 text-xs font-mono text-slate-500">${item.no_pengiriman}</td>
@@ -61,8 +63,7 @@ function renderTable(data) {
                     </div>
                 </td>
             </tr>
-        `;
-        tbody.insertAdjacentHTML('beforeend', row);
+        `);
     });
 }
 
@@ -79,7 +80,7 @@ function updateStats(data) {
 function populateWilayahFilter(data) {
     const select = document.getElementById('filter-wilayah');
     const currentVal = select.value;
-    const wilayahs = [...new Set(data.map(i => i.wilayah))].sort();
+    const wilayahs = [...new Set(data.map(i => i.wilayah))].filter(Boolean).sort();
     
     select.innerHTML = '<option value="">Semua Wilayah</option>';
     wilayahs.forEach(w => {
@@ -106,3 +107,4 @@ document.getElementById('search-input').addEventListener('input', filterData);
 document.getElementById('filter-wilayah').addEventListener('change', filterData);
 
 fetchData();
+setInterval(fetchData, 60000); // Auto-refresh setiap 1 menit
