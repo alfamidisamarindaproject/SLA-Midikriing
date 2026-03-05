@@ -5,45 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SLA Monitoring Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        .online-dot {
+            width: 10px; height: 10px; background: #22c55e; border-radius: 50%;
+            display: inline-block; margin-right: 8px; animation: pulse-green 2s infinite;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans">
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
     <div class="container mx-auto px-4 py-6">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row justify-between items-center">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:row justify-between items-center gap-4">
             <div>
-                <h1 class="text-2xl font-black text-slate-800 italic uppercase">Monitoringg <span class="text-blue-600">Midikriing</span></h1>
-                <p id="gsheet-update" class="text-[10px] text-slate-500 font-bold uppercase italic mt-1">Status: Menghubungkan...</p>
+                <h1 class="text-2xl font-black italic uppercase">Monitoring <span class="text-blue-600">Midikriing</span></h1>
+                <div class="flex items-center mt-1">
+                    <span class="online-dot"></span>
+                    <p id="gsheet-update" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">Menghubungkan Database...</p>
+                </div>
             </div>
-            <div id="status-text" class="text-xs font-bold text-slate-400 uppercase italic">Offline</div>
+            <div id="status-badge" class="hidden md:block text-right">
+                <span class="px-3 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest">Sistem Online</span>
+            </div>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
             <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-slate-400">
-                <p class="text-[9px] font-black text-slate-400 uppercase">Pending</p>
+                <p class="text-[9px] font-black text-slate-400 uppercase">Total Pending</p>
                 <h2 id="stat-total" class="text-2xl font-black">0</h2>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-red-500">
-                <div class="flex justify-between items-center"><p class="text-[9px] font-black text-red-500">NEW</p><span id="perc-new" class="text-[10px] font-bold">0%</span></div>
+                <div class="flex justify-between items-center"><p class="text-[9px] font-black text-red-500 uppercase">NEW</p><span id="perc-new" class="text-[10px] font-bold opacity-60">0%</span></div>
                 <h2 id="stat-new" class="text-2xl font-black text-red-600">0</h2>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-orange-500">
-                <div class="flex justify-between items-center"><p class="text-[9px] font-black text-orange-500">PROSES</p><span id="perc-proses" class="text-[10px] font-bold">0%</span></div>
+                <div class="flex justify-between items-center"><p class="text-[9px] font-black text-orange-500 uppercase">PROSES</p><span id="perc-proses" class="text-[10px] font-bold opacity-60">0%</span></div>
                 <h2 id="stat-proses" class="text-2xl font-black text-orange-600">0</h2>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
-                <div class="flex justify-between items-center"><p class="text-[9px] font-black text-emerald-500">PACKING</p><span id="perc-packing" class="text-[10px] font-bold">0%</span></div>
+                <div class="flex justify-between items-center"><p class="text-[9px] font-black text-emerald-500 uppercase">PACKING</p><span id="perc-packing" class="text-[10px] font-bold opacity-60">0%</span></div>
                 <h2 id="stat-packing" class="text-2xl font-black text-emerald-600">0</h2>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600">
-                <p class="text-[9px] font-black text-blue-600 uppercase">Revenue</p>
+                <p class="text-[9px] font-black text-blue-600 uppercase">Est. Revenue</p>
                 <h2 id="stat-revenue" class="text-lg font-black italic">Rp 0</h2>
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
-            <input type="text" id="search-input" placeholder="Cari Nama/No..." class="p-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-            <select id="filter-wilayah" class="p-2.5 rounded-xl border border-slate-200 bg-white text-sm"></select>
-            <select id="filter-apo" class="p-2.5 rounded-xl border border-slate-200 bg-white text-sm"></select>
-            <select id="filter-shipment" class="p-2.5 rounded-xl border border-slate-200 bg-white text-sm"></select>
+            <input type="text" id="search-input" placeholder="Cari Nama / Toko / No..." class="p-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            <select id="filter-wilayah" class="p-3 rounded-xl border border-slate-200 bg-white text-sm cursor-pointer"></select>
+            <select id="filter-apo" class="p-3 rounded-xl border border-slate-200 bg-white text-sm cursor-pointer"></select>
+            <select id="filter-shipment" class="p-3 rounded-xl border border-slate-200 bg-white text-sm cursor-pointer"></select>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -60,7 +76,7 @@
                         </tr>
                     </thead>
                     <tbody id="main-table-body" class="divide-y divide-slate-100 text-[11px] italic">
-                        <tr><td colspan="6" class="p-20 text-center font-bold text-slate-300 animate-pulse">SINKRONISASI DATA...</td></tr>
+                        <tr><td colspan="6" class="p-20 text-center font-bold text-slate-300 animate-pulse uppercase">Sedang Menyambungkan Ke Server Google...</td></tr>
                     </tbody>
                 </table>
             </div>
