@@ -9,10 +9,13 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
         
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
@@ -23,30 +26,63 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        /* Responsive Table for Mobile */
+        /* RESPONSIVE OPTIMIZATION (MOBILE) */
         @media (max-width: 768px) {
+            /* Sembunyikan Header Tabel Asli */
             thead { display: none; }
+            
+            /* Ubah Body Tabel Menjadi Grid Kartu */
+            #main-table-body {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+                padding: 1rem 0;
+            }
+
+            /* Ubah Baris (TR) Menjadi Kartu Mandiri */
             tr { 
                 display: block; 
-                margin-bottom: 1rem; 
-                border: 1px solid #e2e8f0; 
-                border-radius: 12px;
-                background: white;
-                padding: 10px;
+                background: white !important;
+                border-radius: 1.5rem;
+                padding: 1.25rem;
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                border: 1px solid #f1f5f9 !important;
+                position: relative;
             }
+
+            /* Ubah Kolom (TD) Menjadi Baris Informasi */
             td { 
                 display: flex; 
                 justify-content: space-between; 
-                padding: 8px 12px !important;
-                border: none !important;
+                align-items: center;
+                padding: 0.75rem 0 !important;
+                border-bottom: 1px dashed #f1f5f9 !important;
+                text-align: right;
             }
+
+            td:last-child { border-bottom: none !important; }
+
+            /* Munculkan Label dari data-label */
             td::before {
                 content: attr(data-label);
                 font-weight: 800;
                 text-transform: uppercase;
                 font-size: 10px;
-                color: #64748b;
+                color: #94a3b8;
+                letter-spacing: 0.05em;
+                text-align: left;
+                padding-right: 10px;
             }
+
+            /* Penyesuaian konten di dalam TD pada Mobile */
+            td > div, td > span {
+                max-width: 65%;
+            }
+        }
+
+        /* Hover Effect for Desktop */
+        @media (min-width: 769px) {
+            tr:hover { background-color: #f8fafc !important; transition: all 0.2s; }
         }
     </style>
 </head>
@@ -63,47 +99,47 @@
                         <span id="ping-indicator" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span id="dot-indicator" class="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-white"></span>
                     </span>
-                    <p id="gsheet-update" class="text-[11px] text-slate-500 font-bold uppercase tracking-[0.15em] italic">Menghubungkan Database...</p>
+                    <p id="gsheet-update" class="text-[11px] text-slate-500 font-bold uppercase tracking-[0.15em] italic">Sinkronisasi...</p>
                 </div>
             </div>
             <div class="flex items-center gap-4 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
                 <div class="text-right">
                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">System Status</p>
-                    <p id="status-text" class="text-xs font-extrabold text-slate-700 uppercase italic">Syncing...</p>
+                    <p id="status-text" class="text-xs font-extrabold text-slate-700 uppercase italic">Checking...</p>
                 </div>
-                <i class="fa-solid fa-server text-blue-500 text-lg opacity-50"></i>
+                <i class="fa-solid fa-server text-blue-500 text-lg opacity-40"></i>
             </div>
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-slate-800 transition-transform hover:scale-[1.02]">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-slate-800">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Pending</p>
-                <h2 id="stat-total" class="text-3xl font-extrabold text-slate-800">0</h2>
+                <h2 id="stat-total" class="text-3xl font-extrabold text-slate-800 tracking-tight">0</h2>
             </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-red-500 transition-transform hover:scale-[1.02]">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-red-500">
                 <div class="flex justify-between items-start mb-1">
                     <p class="text-[10px] font-bold text-red-500 uppercase tracking-wider">New</p>
                     <span id="perc-new" class="text-[10px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100">0%</span>
                 </div>
-                <h2 id="stat-new" class="text-3xl font-extrabold text-slate-800">0</h2>
+                <h2 id="stat-new" class="text-3xl font-extrabold text-slate-800 tracking-tight">0</h2>
             </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-orange-500 transition-transform hover:scale-[1.02]">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-orange-500">
                 <div class="flex justify-between items-start mb-1">
                     <p class="text-[10px] font-bold text-orange-500 uppercase tracking-wider">Proses</p>
                     <span id="perc-proses" class="text-[10px] font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-100">0%</span>
                 </div>
-                <h2 id="stat-proses" class="text-3xl font-extrabold text-slate-800">0</h2>
+                <h2 id="stat-proses" class="text-3xl font-extrabold text-slate-800 tracking-tight">0</h2>
             </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-emerald-500 transition-transform hover:scale-[1.02]">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-emerald-500">
                 <div class="flex justify-between items-start mb-1">
                     <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Packing</p>
                     <span id="perc-packing" class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">0%</span>
                 </div>
-                <h2 id="stat-packing" class="text-3xl font-extrabold text-slate-800">0</h2>
+                <h2 id="stat-packing" class="text-3xl font-extrabold text-slate-800 tracking-tight">0</h2>
             </div>
             <div class="bg-slate-900 p-5 rounded-2xl shadow-lg border-l-4 border-blue-500 col-span-2 lg:col-span-1">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Est. Revenue</p>
-                <h2 id="stat-revenue" class="text-xl font-extrabold text-white italic truncate">Rp 0</h2>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 text-slate-500">Est. Revenue</p>
+                <h2 id="stat-revenue" class="text-xl font-extrabold text-white italic truncate tracking-tight">Rp 0</h2>
             </div>
         </div>
 
@@ -111,14 +147,14 @@
             <div class="relative group">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
                 <input type="text" id="search-input" placeholder="Cari Nama / Toko..." 
-                    class="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-blue-500/20 outline-none text-sm transition-all font-semibold">
+                    class="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none shadow-sm focus:ring-4 focus:ring-blue-500/10 outline-none text-sm transition-all font-semibold bg-white">
             </div>
-            <select id="filter-wilayah" class="w-full px-4 py-3.5 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-blue-500/20 text-sm font-semibold cursor-pointer appearance-none bg-white"></select>
-            <select id="filter-apo" class="w-full px-4 py-3.5 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-blue-500/20 text-sm font-semibold cursor-pointer appearance-none bg-white"></select>
-            <select id="filter-shipment" class="w-full px-4 py-3.5 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-blue-500/20 text-sm font-semibold cursor-pointer appearance-none bg-white"></select>
+            <select id="filter-wilayah" class="w-full px-4 py-3.5 rounded-2xl border-none shadow-sm focus:ring-4 focus:ring-blue-500/10 text-sm font-semibold cursor-pointer appearance-none bg-white"></select>
+            <select id="filter-apo" class="w-full px-4 py-3.5 rounded-2xl border-none shadow-sm focus:ring-4 focus:ring-blue-500/10 text-sm font-semibold cursor-pointer appearance-none bg-white"></select>
+            <select id="filter-shipment" class="w-full px-4 py-3.5 rounded-2xl border-none shadow-sm focus:ring-4 focus:ring-blue-500/10 text-sm font-semibold cursor-pointer appearance-none bg-white"></select>
         </div>
 
-        <div class="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+        <div class="bg-transparent md:bg-white md:rounded-[2rem] md:shadow-xl md:shadow-slate-200/50 md:border md:border-slate-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-50/50">
@@ -131,11 +167,11 @@
                             <th class="px-8 py-6 text-center">SLA</th>
                         </tr>
                     </thead>
-                    <tbody id="main-table-body" class="divide-y divide-slate-50 italic">
+                    <tbody id="main-table-body" class="italic">
                         <tr>
                             <td colspan="6" class="p-24 text-center">
-                                <i class="fa-solid fa-circle-notch animate-spin text-blue-500 text-3xl mb-4"></i>
-                                <p class="font-bold text-slate-300 uppercase tracking-widest text-xs">Mempersiapkan Data...</p>
+                                <i class="fa-solid fa-circle-notch animate-spin text-blue-500 text-3xl mb-4 opacity-30"></i>
+                                <p class="font-bold text-slate-300 uppercase tracking-widest text-[10px]">Mempersiapkan Data...</p>
                             </td>
                         </tr>
                     </tbody>
@@ -143,8 +179,8 @@
             </div>
         </div>
         
-        <div class="mt-8 text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Internal SLA Monitoring System v2.0</p>
+        <div class="mt-8 text-center pb-8">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] opacity-60">SLA Monitoring System v2.1 • Internal Use Only</p>
         </div>
     </div>
 
