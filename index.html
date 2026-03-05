@@ -14,15 +14,15 @@
                 <h1 class="text-2xl font-black text-slate-800 italic uppercase">SLA <span class="text-blue-600">Monitoring</span></h1>
                 <div class="flex items-center mt-1">
                     <span class="relative flex h-2 w-2 mr-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        <span id="ping-indicator" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span id="dot-indicator" class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <p id="gsheet-update" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">Menghubungkan server...</p>
+                    <p id="gsheet-update" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">Inisialisasi Server...</p>
                 </div>
             </div>
             <div class="text-right hidden md:block">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">System Status</p>
-                <p class="text-xs font-bold text-slate-700">ONLINE / REAL-TIME</p>
+                <p id="status-text" class="text-xs font-bold text-slate-700 uppercase">Checking...</p>
             </div>
         </div>
 
@@ -45,7 +45,7 @@
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600 col-span-2 md:col-span-1">
                 <p class="text-[9px] font-black text-blue-600 uppercase">Revenue</p>
-                <h2 id="stat-revenue" class="text-xl font-black text-gray-800">Rp 0</h2>
+                <h2 id="stat-revenue" class="text-xl font-black text-gray-800 text-sm">Rp 0</h2>
             </div>
         </div>
 
@@ -71,7 +71,7 @@
                         </tr>
                     </thead>
                     <tbody id="main-table-body" class="divide-y divide-slate-100 italic">
-                        <tr><td colspan="7" class="p-20 text-center font-bold text-slate-300 animate-pulse uppercase tracking-tighter">Memproses Sinkronisasi Data...</td></tr>
+                        <tr><td colspan="7" class="p-20 text-center font-bold text-slate-300 animate-pulse uppercase tracking-widest">Menunggu Sinkronisasi Data...</td></tr>
                     </tbody>
                 </table>
             </div>
