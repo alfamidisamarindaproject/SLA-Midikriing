@@ -38,7 +38,7 @@ async function fetchData() {
 function setupDropdown(id, key, label) {
     const dropdown = document.getElementById(id);
     const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
-    dropdown.innerHTML = `<option value="">Semua ${label}</option>`;
+    dropdown.innerHTML = `<option value="">All ${label}</option>`;
     uniqueValues.forEach(val => {
         dropdown.insertAdjacentHTML('beforeend', `<option value="${val}">${val}</option>`);
     });
