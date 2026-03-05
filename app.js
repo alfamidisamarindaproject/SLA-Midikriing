@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbz900YuDdYRQkJx2F29hiVPDPHVJjJZQid4T11Am7kBQPVOm3xs0ravbRnersx4s58l/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbzyeqGXVILF1N1hYGjUUt-uXZ1bMC89F5qy0gsirD6QsKYyAQUDeJ31HAccqvVyQhA6/exec"; 
 
 let masterData = [];
 
@@ -17,7 +17,6 @@ async function fetchData() {
         setupDropdown('filter-shipment', 'status_shipment', 'Shipment');
 
         applyFilters();
-        document.getElementById('last-update').innerText = `Terakhir Update: ${new Date().toLocaleTimeString()}`;
     } catch (e) {
         tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500">Error: ${e.message}</td></tr>`;
     } finally {
@@ -34,16 +33,15 @@ function setupDropdown(id, key, label) {
 }
 
 function applyFilters() {
-    const sSearch = document.getElementById('search-input').value.toLowerCase();
-    const sWilayah = document.getElementById('filter-wilayah').value;
-    const sApo = document.getElementById('filter-apo').value;
-    const sShip = document.getElementById('filter-shipment').value;
-
+    const searchVal = document.getElementById('search-input').value.toLowerCase();
     const filtered = masterData.filter(item => {
-        const matchSearch = item.nama.toLowerCase().includes(sSearch) || item.toko.toLowerCase().includes(sSearch) || item.no_pengiriman.toLowerCase().includes(sSearch);
-        const matchWilayah = sWilayah === "" || item.wilayah === sWilayah;
-        const matchApo = sApo === "" || item.status_apo === sApo;
-        const matchShip = sShip === "" || item.status_shipment === sShip;
+        const matchSearch = item.nama.toLowerCase().includes(searchVal) || 
+                            item.toko.toLowerCase().includes(searchVal) || 
+                            item.no_pengiriman.toLowerCase().includes(searchVal);
+        const matchWilayah = document.getElementById('filter-wilayah').value === "" || item.wilayah === document.getElementById('filter-wilayah').value;
+        const matchApo = document.getElementById('filter-apo').value === "" || item.status_apo === document.getElementById('filter-apo').value;
+        const matchShip = document.getElementById('filter-shipment').value === "" || item.status_shipment === document.getElementById('filter-shipment').value;
+        
         return matchSearch && matchWilayah && matchApo && matchShip;
     });
 
@@ -56,8 +54,8 @@ function updateDashboard(data) {
     document.getElementById('stat-new').innerText = data.filter(i => i.status_apo === 'NEW').length;
     document.getElementById('stat-proses').innerText = data.filter(i => i.status_apo === 'PROSES').length;
     document.getElementById('stat-packing').innerText = data.filter(i => i.status_apo === 'PACKING').length;
-    const totalRev = data.reduce((acc, curr) => acc + curr.revenue, 0);
-    document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalRev);
+    const rev = data.reduce((acc, curr) => acc + curr.revenue, 0);
+    document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(rev);
 }
 
 function renderTable(data) {
@@ -65,13 +63,13 @@ function renderTable(data) {
     tbody.innerHTML = '';
 
     data.forEach(item => {
-        // Logika SLA
+        // Logika Hitung SLA Hari
         const jadwal = item.jadwal_kirim ? new Date(item.jadwal_kirim) : null;
         const hariIni = new Date();
         hariIni.setHours(0,0,0,0);
         
         let slaText = "-";
-        let slaClass = "text-slate-400";
+        let slaClass = "text-gray-400";
 
         if(jadwal) {
             jadwal.setHours(0,0,0,0);
@@ -79,40 +77,39 @@ function renderTable(data) {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
             if(diffDays < 0) {
-                slaText = `${diffDays} Hr`;
-                slaClass = "text-red-600 font-black";
+                slaText = `${diffDays} Hari`; // Minus (Terlambat)
+                slaClass = "text-red-600 font-black italic";
             } else if (diffDays === 0) {
-                slaText = "Hari Ini";
+                slaText = "HARI INI";
                 slaClass = "text-orange-500 font-bold";
             } else {
-                slaText = `+${diffDays} Hr`;
-                slaClass = "text-emerald-600";
+                slaText = `+${diffDays} Hari`;
+                slaClass = "text-emerald-600 font-bold";
             }
         }
 
-        const tglKirim = jadwal ? jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short'}) : "-";
+        const tglKirimFormat = jadwal ? jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : "-";
         const apoBadge = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600 border-red-100' : 
                          item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100';
 
-        // URUTAN ROW: Toko/Wilayah, Penerima, No Pengiriman, Status APO, Shipment, Jadwal, SLA
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 text-xs">
+            <tr class="hover:bg-gray-50 transition-colors text-xs">
                 <td class="px-6 py-4">
-                    <div class="font-bold text-slate-800">${item.toko}</div>
+                    <div class="font-bold text-gray-800">${item.toko}</div>
                     <div class="text-[9px] text-blue-500 font-black uppercase tracking-tighter">${item.wilayah}</div>
                 </td>
-                <td class="px-6 py-4 font-semibold text-slate-600">${item.nama}</td>
-                <td class="px-6 py-4 font-mono text-[10px] text-slate-400">${item.no_pengiriman}</td>
+                <td class="px-6 py-4 font-semibold text-gray-600">${item.nama}</td>
+                <td class="px-6 py-4 font-mono text-[10px] text-gray-400">${item.no_pengiriman}</td>
                 <td class="px-6 py-4 text-center">
                     <span class="px-2 py-0.5 rounded border font-black text-[9px] ${apoBadge}">${item.status_apo}</span>
                 </td>
                 <td class="px-6 py-4">
-                    <div class="flex items-center font-bold text-slate-500 text-[10px]">
+                    <div class="flex items-center font-bold text-gray-500 text-[10px]">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-400 mr-2"></span>
                         ${item.status_shipment}
                     </div>
                 </td>
-                <td class="px-6 py-4 font-bold text-slate-600">${tglKirim}</td>
+                <td class="px-6 py-4 font-bold text-gray-600">${tglKirimFormat}</td>
                 <td class="px-6 py-4 text-center ${slaClass}">${slaText}</td>
             </tr>
         `);
