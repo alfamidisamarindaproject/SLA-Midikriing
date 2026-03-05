@@ -1,141 +1,117 @@
-document.getElementById('processBtn').addEventListener('click', processUrls);
+// 1. KONFIGURASI: Masukkan URL Web App dari Deploy Google Apps Script Anda di sini
+const API_URL = "https://script.google.com/macros/s/AKfycbzQcYjz8AyYQJ5oyVDr6YvGaOlWzJhYqGaskUhu8gfcsyGDpOxy-lvn8XaFNUu9m6HM/exec";
 
-let dataCsv = [];
-let strukturCsv = [];
+let masterData = [];
 
-function processUrls() {
-    const dataUrl = document.getElementById('dataUrl').value.trim();
-    const strukturUrl = document.getElementById('strukturUrl').value.trim();
-
-    if (!dataUrl || !strukturUrl) {
-        alert("Silakan masukkan kedua Link CSV (Data dan Struktur) terlebih dahulu.");
-        return;
-    }
-
-    const loadingText = document.getElementById('loadingText');
-    const processBtn = document.getElementById('processBtn');
-    
-    processBtn.disabled = true;
-    loadingText.classList.remove('hidden');
-
-    // Mengambil data CSV dari URL Sheet "Data"
-    Papa.parse(dataUrl, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-            dataCsv = results.data;
-            
-            // Mengambil data CSV dari URL Sheet "Struktur"
-            Papa.parse(strukturUrl, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(resStruktur) {
-                    strukturCsv = resStruktur.data;
-                    
-                    filterAndRenderData();
-                    
-                    processBtn.disabled = false;
-                    loadingText.classList.add('hidden');
-                },
-                error: function(err) {
-                    alert("Gagal mengambil data Struktur. Pastikan link sudah benar dan disetting 'Publish to the web' sebagai CSV.");
-                    processBtn.disabled = false;
-                    loadingText.classList.add('hidden');
-                }
-            });
-        },
-        error: function(err) {
-            alert("Gagal mengambil Data. Pastikan link sudah benar dan disetting 'Publish to the web' sebagai CSV.");
-            processBtn.disabled = false;
-            loadingText.classList.add('hidden');
-        }
-    });
-}
-
-// Konversi string "DD/MM/YYYY HH:mm" ke Object Date
-function parseDateString(dateStr) {
-    if (!dateStr) return null;
-    const parts = dateStr.trim().split(' ');
-    const dateParts = parts[0].split('/');
-    if (dateParts.length === 3) {
-        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
-    }
-    return null;
-}
-
-function filterAndRenderData() {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    
-    const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(today.getDate() - 2);
-    twoDaysAgo.setHours(0, 0, 0, 0);
-
-    // Membuat Map untuk file struktur (menyimpan Wilayah, AC, dan AM)
-    const strukturMap = {};
-    strukturCsv.forEach(row => {
-        if (row['KD TOKO']) {
-            strukturMap[row['KD TOKO'].trim()] = {
-                wilayah: row['WILAYAH'] || '-',
-                ac: row['AC'] || '-',
-                am: row['AM'] || '-'
-            };
-        }
-    });
-
-    // Filter Data (Belum diterima & 2 hari terakhir)
-    const filteredData = dataCsv.filter(row => {
-        const shipmentStatus = row['SHIPMENT STATUS'] ? row['SHIPMENT STATUS'].trim().toUpperCase() : '';
-        const sendDateStr = row['SEND DATE TO STORE'] || row['JADWAL KIRIM'];
+async function fetchData() {
+    toggleLoading(true);
+    try {
+        const response = await fetch(API_URL);
+        masterData = await response.json();
         
-        const isNotDelivered = shipmentStatus !== 'SUDAH DI TERIMA OLEH CUSTOMER' && shipmentStatus !== '';
-
-        const orderDate = parseDateString(sendDateStr);
-        let isWithin2Days = false;
-
-        if (orderDate) {
-            isWithin2Days = (orderDate >= twoDaysAgo && orderDate <= today);
-        }
-
-        return isNotDelivered && isWithin2Days;
-    });
-
-    renderTable(filteredData, strukturMap);
+        populateWilayahFilter(masterData);
+        renderTable(masterData);
+        updateStats(masterData);
+        
+        document.getElementById('last-update').innerText = `Terakhir update: ${new Date().toLocaleTimeString()}`;
+    } catch (error) {
+        alert("Gagal mengambil data. Pastikan URL API benar dan sudah di-deploy sebagai 'Anyone'.");
+        console.error(error);
+    } finally {
+        toggleLoading(false);
+    }
 }
 
-function renderTable(data, strukturMap) {
-    const tableBody = document.getElementById('tableBody');
-    tableBody.innerHTML = ''; 
-    
-    document.getElementById('countData').innerText = data.length;
-    document.getElementById('resultsArea').classList.remove('hidden');
+function renderTable(data) {
+    const tbody = document.getElementById('main-table-body');
+    tbody.innerHTML = '';
 
     if (data.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-gray-500">Semua pesanan dalam 2 hari terakhir sudah terkirim / Tidak ada data.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-slate-400 italic">Tidak ada data pesanan belum terkirim.</td></tr>`;
         return;
     }
 
-    data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.className = "border-b hover:bg-gray-50";
+    data.forEach(item => {
+        // Logika warna status
+        const apoClass = item.status_apo === 'NEW' ? 'bg-red-100 text-red-700' : 
+                         item.status_apo === 'PROSES' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
 
-        const kodeToko = row['KODE TOKO'] ? row['KODE TOKO'].trim() : '-';
-        
-        // Ambil info dari map struktur
-        const infoStruktur = strukturMap[kodeToko] || { wilayah: 'Tidak ditemukan', ac: '-', am: '-' };
-
-        tr.innerHTML = `
-            <td class="py-2 px-3">${kodeToko}</td>
-            <td class="py-2 px-3">${row['TOKO'] || '-'}</td>
-            <td class="py-2 px-3">${infoStruktur.wilayah}</td>
-            <td class="py-2 px-3 font-semibold text-blue-700">${infoStruktur.ac}</td>
-            <td class="py-2 px-3 font-semibold text-green-700">${infoStruktur.am}</td>
-            <td class="py-2 px-3">${row['NO PENGIRIMAN'] || '-'}</td>
-            <td class="py-2 px-3">${row['SEND DATE TO STORE'] || row['JADWAL KIRIM'] || '-'}</td>
-            <td class="py-2 px-3 text-red-600 font-semibold">${row['SHIPMENT STATUS'] || '-'}</td>
+        const row = `
+            <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                <td class="p-4">
+                    <div class="font-bold text-slate-900">${item.toko}</div>
+                    <div class="text-xs text-slate-500 uppercase tracking-wider">${item.wilayah}</div>
+                </td>
+                <td class="p-4 font-medium">${item.nama}</td>
+                <td class="p-4 text-sm font-mono text-slate-500">${item.no_pengiriman}</td>
+                <td class="p-4 text-center">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${apoClass}">${item.status_apo}</span>
+                </td>
+                <td class="p-4 text-sm">
+                    <div class="flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
+                        ${item.status_shipment}
+                    </div>
+                </td>
+            </tr>
         `;
-        tableBody.appendChild(tr);
+        tbody.insertAdjacentHTML('beforeend', row);
     });
 }
+
+function updateStats(data) {
+    const total = data.length;
+    const proses = data.filter(i => i.status_apo === 'PROSES').length;
+    const dikirim = data.filter(i => i.status_shipment.includes('DI KIRIM')).length;
+    const revenue = data.reduce((sum, item) => sum + (Number(item.revenue) || 0), 0);
+
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-proses').innerText = proses;
+    document.getElementById('stat-dikirim').innerText = dikirim;
+    document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(revenue);
+}
+
+function populateWilayahFilter(data) {
+    const select = document.getElementById('filter-wilayah');
+    const wilayahs = [...new Set(data.map(i => i.wilayah))].sort();
+    
+    // Simpan nilai lama agar tidak reset saat refresh
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">Semua Wilayah</option>';
+    wilayahs.forEach(w => {
+        select.insertAdjacentHTML('beforeend', `<option value="${w}">${w}</option>`);
+    });
+    select.value = currentVal;
+}
+
+// Fitur Pencarian & Filter
+function filterData() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const wilayahTerm = document.getElementById('filter-wilayah').value;
+
+    const filtered = masterData.filter(item => {
+        const matchesSearch = item.nama.toLowerCase().includes(searchTerm) || 
+                              item.toko.toLowerCase().includes(searchTerm) ||
+                              item.no_pengiriman.toLowerCase().includes(searchTerm);
+        const matchesWilayah = wilayahTerm === "" || item.wilayah === wilayahTerm;
+        
+        return matchesSearch && matchesWilayah;
+    });
+
+    renderTable(filtered);
+}
+
+function toggleLoading(isLoading) {
+    document.getElementById('loading-state').classList.toggle('hidden', !isLoading);
+    document.getElementById('main-table-body').classList.toggle('hidden', isLoading);
+}
+
+// Event Listeners
+document.getElementById('search-input').addEventListener('input', filterData);
+document.getElementById('filter-wilayah').addEventListener('change', filterData);
+
+// Inisialisasi awal
+fetchData();
+
+// Auto refresh setiap 5 menit
+setInterval(fetchData, 300000);
