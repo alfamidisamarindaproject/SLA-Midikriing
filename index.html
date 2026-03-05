@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Monitoring SLA MidiKriing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-6">
+    <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4 text-blue-600">Monitoring SLA MidiKriing</h1>
+        <p class="mb-6 text-gray-600">Menampilkan pesanan yang <strong>belum terkirim</strong> (Shipment Status bukan "SUDAH DI TERIMA OLEH CUSTOMER") dalam <strong>2 hari ke belakang</strong> dari hari ini.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 border rounded bg-gray-50">
+                <label class="block font-semibold mb-2" for="dataFile">Upload File Data (.csv):</label>
+                <input type="file" id="dataFile" accept=".csv" class="w-full">
+            </div>
+            <div class="p-4 border rounded bg-gray-50">
+                <label class="block font-semibold mb-2" for="strukturFile">Upload File Struktur (.csv) - Opsional:</label>
+                <input type="file" id="strukturFile" accept=".csv" class="w-full">
+            </div>
+        </div>
+
+        <button id="processBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Proses Data</button>
+
+        <div id="resultsArea" class="mt-8 hidden">
+            <h2 class="text-xl font-bold mb-4">Hasil Monitoring (<span id="countData">0</span> Pesanan)</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="py-2 px-4 border text-left">Kode Toko</th>
+                            <th class="py-2 px-4 border text-left">Nama Toko</th>
+                            <th class="py-2 px-4 border text-left">Wilayah (Struktur)</th>
+                            <th class="py-2 px-4 border text-left">No Pengiriman</th>
+                            <th class="py-2 px-4 border text-left">Penerima</th>
+                            <th class="py-2 px-4 border text-left">Tgl Kirim (Send Date)</th>
+                            <th class="py-2 px-4 border text-left">Shipment Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
