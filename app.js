@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxUXD4OZX0EaSZdaTXgLX6YOQDOC_-W4cyfZhd_TedOfmgLDJXzX_RG3GRfJmWDX1nJ/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxMHdxg6f5OFH1KFBH3BshBarr2J2uXEjhOBcgZKLh-WfRnVJxr-t6fSzDqoo5i_vcG/exec"; 
 let masterData = [];
 
 async function fetchData() {
@@ -14,11 +14,13 @@ async function fetchData() {
 
         updateLabel.innerText = `Data Update: ${resJson.dataUpdate}`;
         statusText.innerText = "Online";
-        statusText.className = "text-xs font-bold text-green-600 uppercase";
+        statusText.className = "text-xs font-bold text-green-600 uppercase italic";
         
         masterData = resJson.data;
         
         setupDropdown('filter-wilayah', 'wilayah', 'Wilayah');
+        setupDropdown('filter-am', 'am', 'AM');
+        setupDropdown('filter-ac', 'ac', 'AC');
         setupDropdown('filter-apo', 'status_apo', 'APO');
         setupDropdown('filter-shipment', 'status_shipment', 'Shipment');
 
@@ -26,7 +28,8 @@ async function fetchData() {
     } catch (e) {
         updateLabel.innerText = "Gagal Sinkron!";
         statusText.innerText = "Offline";
-        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase italic">Error Koneksi ke Google Sheets</td></tr>`;
+        statusText.className = "text-xs font-bold text-red-600 uppercase italic";
+        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase italic">Error: Koneksi terputus. Silakan Deploy ulang Apps Script.</td></tr>`;
     }
 }
 
@@ -43,6 +46,8 @@ function setupDropdown(id, key, label) {
 function applyFilters() {
     const sVal = document.getElementById('search-input').value.toLowerCase();
     const wVal = document.getElementById('filter-wilayah').value;
+    const amVal = document.getElementById('filter-am').value;
+    const acVal = document.getElementById('filter-ac').value;
     const aVal = document.getElementById('filter-apo').value;
     const shVal = document.getElementById('filter-shipment').value;
 
@@ -51,9 +56,11 @@ function applyFilters() {
                         (item.toko || "").toLowerCase().includes(sVal) || 
                         (item.no_pengiriman || "").toLowerCase().includes(sVal);
         const mWil = wVal === "" || item.wilayah === wVal;
+        const mAm = amVal === "" || item.am === amVal;
+        const mAc = acVal === "" || item.ac === acVal;
         const mApo = aVal === "" || item.status_apo === aVal;
         const mShip = shVal === "" || item.status_shipment === shVal;
-        return mSearch && mWil && mApo && mShip;
+        return mSearch && mWil && mAm && mAc && mApo && mShip;
     });
 
     updateDashboard(filtered);
@@ -87,17 +94,15 @@ function renderTable(data) {
     skrg.setHours(0,0,0,0);
 
     data.forEach(item => {
-        let tglStr = "-";
         let slaStr = "-";
-        let slaClass = "text-slate-400";
+        let slaClass = "text-slate-400 font-bold";
 
         if (item.jadwal_kirim) {
             const jadwal = new Date(item.jadwal_kirim);
             if (!isNaN(jadwal.getTime())) {
                 jadwal.setHours(0,0,0,0);
-                tglStr = jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
-                
                 const diff = Math.ceil((jadwal - skrg) / (1000 * 60 * 60 * 24));
+                
                 if (diff < 0) {
                     slaStr = `${diff} Hr`;
                     slaClass = "text-red-600 font-black italic";
@@ -116,20 +121,27 @@ function renderTable(data) {
 
         tbody.insertAdjacentHTML('beforeend', `
             <tr class="hover:bg-slate-50 text-[11px] border-b border-slate-100 italic transition-all">
-                <td class="px-6 py-4 font-black text-slate-800">${item.toko}<br><span class="text-[9px] text-blue-500 font-black uppercase">${item.wilayah}</span></td>
+                <td class="px-6 py-4 font-black text-slate-800">
+                    ${item.toko}<br>
+                    <span class="text-[9px] text-blue-500 font-black uppercase">${item.wilayah}</span>
+                </td>
                 <td class="px-6 py-4 font-semibold text-slate-600 uppercase">${item.nama}</td>
-                <td class="px-6 py-4 text-center font-mono text-slate-400 italic">${item.no_pengiriman}</td>
-                <td class="px-6 py-4 text-center"><span class="px-2 py-0.5 rounded border font-black text-[9px] ${badge}">${item.status_apo}</span></td>
-                <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[10px] italic">${item.status_shipment}</td>
-                <td class="px-6 py-4 text-center font-bold text-slate-700">${tglStr}</td>
+                <td class="px-6 py-4 text-center font-mono text-slate-400">${item.no_pengiriman}</td>
+                <td class="px-6 py-4 text-center">
+                    <span class="px-2 py-0.5 rounded border font-black text-[9px] ${badge}">${item.status_apo}</span>
+                </td>
+                <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[10px]">${item.status_shipment}</td>
                 <td class="px-6 py-4 text-center ${slaClass}">${slaStr}</td>
             </tr>
         `);
     });
 }
 
+// Event Listeners
 document.getElementById('search-input').addEventListener('input', applyFilters);
 document.getElementById('filter-wilayah').addEventListener('change', applyFilters);
+document.getElementById('filter-am').addEventListener('change', applyFilters);
+document.getElementById('filter-ac').addEventListener('change', applyFilters);
 document.getElementById('filter-apo').addEventListener('change', applyFilters);
 document.getElementById('filter-shipment').addEventListener('change', applyFilters);
 
