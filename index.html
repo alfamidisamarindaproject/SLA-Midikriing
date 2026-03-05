@@ -28,18 +28,13 @@
 
         /* RESPONSIVE OPTIMIZATION (MOBILE) */
         @media (max-width: 768px) {
-            /* Sembunyikan Header Tabel Asli */
             thead { display: none; }
-            
-            /* Ubah Body Tabel Menjadi Grid Kartu */
             #main-table-body {
                 display: grid;
                 grid-template-columns: 1fr;
                 gap: 1.25rem;
                 padding: 1rem 0;
             }
-
-            /* Ubah Baris (TR) Menjadi Kartu Mandiri */
             tr { 
                 display: block; 
                 background: white !important;
@@ -49,8 +44,6 @@
                 border: 1px solid #f1f5f9 !important;
                 position: relative;
             }
-
-            /* Ubah Kolom (TD) Menjadi Baris Informasi */
             td { 
                 display: flex; 
                 justify-content: space-between; 
@@ -59,10 +52,7 @@
                 border-bottom: 1px dashed #f1f5f9 !important;
                 text-align: right;
             }
-
             td:last-child { border-bottom: none !important; }
-
-            /* Munculkan Label dari data-label */
             td::before {
                 content: attr(data-label);
                 font-weight: 800;
@@ -73,14 +63,9 @@
                 text-align: left;
                 padding-right: 10px;
             }
-
-            /* Penyesuaian konten di dalam TD pada Mobile */
-            td > div, td > span {
-                max-width: 65%;
-            }
+            td > div, td > span { max-width: 65%; }
         }
 
-        /* Hover Effect for Desktop */
         @media (min-width: 769px) {
             tr:hover { background-color: #f8fafc !important; transition: all 0.2s; }
         }
@@ -102,12 +87,22 @@
                     <p id="gsheet-update" class="text-[11px] text-slate-500 font-bold uppercase tracking-[0.15em] italic">Loading...</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
-                <div class="text-right">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">System Status</p>
-                    <p id="status-text" class="text-xs font-extrabold text-slate-700 uppercase italic">Checking...</p>
+
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <a href="https://docs.google.com/spreadsheets/d/1uTC6JQ85xPfh6eXUX9eHaeA-yhzoDALAkDj_mBm_pCQ/edit?usp=sharing" 
+                   target="_blank" 
+                   class="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2.5 rounded-xl border border-emerald-200 transition-all text-xs font-bold">
+                    <i class="fa-solid fa-file-excel text-sm"></i>
+                    <span>BUKA DATABASE</span>
+                </a>
+
+                <div class="flex items-center gap-4 bg-slate-50 px-5 py-2.5 rounded-xl border border-slate-100">
+                    <div class="text-right">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">System Status</p>
+                        <p id="status-text" class="text-xs font-extrabold text-slate-700 uppercase italic">Checking...</p>
+                    </div>
+                    <i class="fa-solid fa-server text-blue-500 text-lg opacity-40"></i>
                 </div>
-                <i class="fa-solid fa-server text-blue-500 text-lg opacity-40"></i>
             </div>
         </div>
 
@@ -179,9 +174,12 @@
             </div>
         </div>
         
-        <div class="mt-8 text-center pb-8">
+        <div class="mt-8 text-center pb-8 border-t border-slate-100 pt-8">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] opacity-60">Internal Use Only</p>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] opacity-60">Made by : Akbar Rasyid - SQR</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-2">
+                Data Source: <a href="https://docs.google.com/spreadsheets/d/1uTC6JQ85xPfh6eXUX9eHaeA-yhzoDALAkDj_mBm_pCQ/edit?usp=sharing" target="_blank" class="text-blue-500 hover:underline">Google Sheets</a>
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] opacity-60 mt-4">Made by : Akbar Rasyid - SQR</p>
         </div>
     </div>
 
