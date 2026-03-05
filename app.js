@@ -1,13 +1,15 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwROUAgHW5tZziTIGsmkkKJrnSf0fzEXsEXl0HmcA2e4jwesd_I7mRG6KDrD3E6Czl-/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbzzagJJlCCCzL0EhUvENnOgPIPn9Z8Pb_ssd0wg7y4Ao0es1YHMuqRr58-rGC-UknFq/exec"; // GANTI DENGAN URL DEPLOYMENT BARU
+
 let masterData = [];
 
 async function fetchData() {
     const tbody = document.getElementById('main-table-body');
-    tbody.innerHTML = '<tr><td colspan="7" class="p-10 text-center font-bold text-blue-600 animate-pulse">MEMPROSES DATA...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="p-10 text-center font-bold text-blue-600 animate-pulse">SINKRONISASI DATA...</td></tr>';
 
     try {
         const response = await fetch(API_URL);
-        masterData = await response.json();
+        const data = await response.json();
+        masterData = data;
         
         setupDropdown('filter-wilayah', 'wilayah', 'Wilayah');
         setupDropdown('filter-apo', 'status_apo', 'APO');
@@ -15,7 +17,7 @@ async function fetchData() {
 
         applyFilters();
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold">Koneksi Gagal. Cek URL Deployment Anda.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold">DATA GAGAL DIMUAT. CEK URL DEPLOYMENT.</td></tr>`;
     }
 }
 
@@ -27,16 +29,16 @@ function setupDropdown(id, key, label) {
 }
 
 function applyFilters() {
-    const sVal = document.getElementById('search-input').value.toLowerCase();
-    const wVal = document.getElementById('filter-wilayah').value;
-    const aVal = document.getElementById('filter-apo').value;
-    const shVal = document.getElementById('filter-shipment').value;
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const wil = document.getElementById('filter-wilayah').value;
+    const apo = document.getElementById('filter-apo').value;
+    const ship = document.getElementById('filter-shipment').value;
 
     const filtered = masterData.filter(item => {
-        const mSearch = item.nama.toLowerCase().includes(sVal) || item.toko.toLowerCase().includes(sVal) || item.no_pengiriman.toLowerCase().includes(sVal);
-        const mWil = wVal === "" || item.wilayah === wVal;
-        const mApo = aVal === "" || item.status_apo === aVal;
-        const mShip = shVal === "" || item.status_shipment === shVal;
+        const mSearch = item.nama.toLowerCase().includes(search) || item.toko.toLowerCase().includes(search) || item.no_pengiriman.toLowerCase().includes(search);
+        const mWil = wil === "" || item.wilayah === wil;
+        const mApo = apo === "" || item.status_apo === apo;
+        const mShip = ship === "" || item.status_shipment === ship;
         return mSearch && mWil && mApo && mShip;
     });
 
@@ -61,27 +63,27 @@ function renderTable(data) {
     hariIni.setHours(0,0,0,0);
 
     data.forEach(item => {
-        let tglTampil = "-";
-        let slaTampil = "-";
-        let slaStyle = "text-slate-400";
+        let tglStr = "-";
+        let slaStr = "-";
+        let slaClass = "text-slate-400";
 
         if (item.jadwal_kirim) {
             const jadwal = new Date(item.jadwal_kirim);
             jadwal.setHours(0,0,0,0);
             
-            tglTampil = jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
+            tglStr = jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
             
             const diff = Math.ceil((jadwal - hariIni) / (1000 * 60 * 60 * 24));
             
             if (diff < 0) {
-                slaTampil = `${diff} Hr`;
-                slaStyle = "text-red-600 font-black italic";
+                slaStr = `${diff} Hari`;
+                slaClass = "text-red-600 font-black italic";
             } else if (diff === 0) {
-                slaTampilan = "HARI INI";
-                slaStyle = "text-orange-500 font-bold";
+                slaStr = "HARI INI";
+                slaClass = "text-orange-500 font-bold";
             } else {
-                slaTampil = `+${diff} Hr`;
-                slaStyle = "text-emerald-600 font-bold";
+                slaStr = `+${diff} Hari`;
+                slaClass = "text-emerald-600 font-bold";
             }
         }
 
@@ -94,14 +96,14 @@ function renderTable(data) {
                     <div class="font-bold text-slate-800">${item.toko}</div>
                     <div class="text-[9px] text-blue-500 font-black uppercase">${item.wilayah}</div>
                 </td>
-                <td class="px-6 py-4 font-semibold text-slate-600 uppercase">${item.nama}</td>
+                <td class="px-6 py-4 font-semibold text-slate-600">${item.nama}</td>
                 <td class="px-6 py-4 text-center font-mono text-slate-400">${item.no_pengiriman}</td>
                 <td class="px-6 py-4 text-center">
                     <span class="px-2 py-0.5 rounded border font-black text-[9px] ${apoBadge}">${item.status_apo}</span>
                 </td>
                 <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[10px]">${item.status_shipment}</td>
-                <td class="px-6 py-4 text-center font-bold text-slate-700">${tglTampil}</td>
-                <td class="px-6 py-4 text-center ${slaStyle}">${slaTampil}</td>
+                <td class="px-6 py-4 text-center font-bold text-slate-700">${tglStr}</td>
+                <td class="px-6 py-4 text-center ${slaClass}">${slaStr}</td>
             </tr>
         `);
     });
