@@ -1,4 +1,5 @@
-const API_URL = "https://script.google.com/macros/s/AKfycby98QrROx7vZ4wgb8nHqdGPyy07ROfSdt2vfMwRhi447_bbDlXlgldTUwmAORSCglhv/exec"; 
+// GANTI DENGAN URL WEB APP BARU ANDA (PASTIKAN DIAKHIRI /exec)
+const API_URL = "https://script.google.com/macros/s/AKfycbwGPuCYIt5Iusb0J_p2VpxfDX5SulF1ydF3x3BMG_NFndX2Msw-yYWOQ1nSW6q8dikV/exec"; 
 let masterData = [];
 
 async function fetchData() {
@@ -8,30 +9,30 @@ async function fetchData() {
 
     try {
         const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Network response was not ok');
         const resJson = await response.json();
         
         if (resJson.error) throw new Error(resJson.error);
 
-        // Update Header & Status (Sync dengan WITA dari Backend)
+        // Update Label Sync (WITA)
         updateLabel.innerText = `Sync: ${resJson.dataUpdate || 'Baru Saja'}`;
         statusText.innerText = "Online";
         statusText.className = "text-xs font-extrabold text-green-500 uppercase italic";
         
         masterData = resJson.data;
         
-        // Inisialisasi Dropdown Filter
+        // Buat Dropdown Filter secara dinamis
         setupDropdown('filter-wilayah', 'wilayah', 'Wilayah');
         setupDropdown('filter-apo', 'status_apo', 'APO');
         setupDropdown('filter-shipment', 'status_shipment', 'Shipment');
 
-        // Jalankan Filter Pertama Kali
         applyFilters(); 
     } catch (e) {
         updateLabel.innerText = "Gagal Sinkron!";
         statusText.innerText = "Offline";
         statusText.className = "text-xs font-extrabold text-red-500 uppercase italic";
-        tbody.innerHTML = `<tr><td colspan="6" class="p-20 text-center text-red-500 font-bold uppercase italic tracking-widest text-xs">Koneksi Error: Hubungi Administrator</td></tr>`;
-        console.error(e);
+        tbody.innerHTML = `<tr><td colspan="6" class="p-20 text-center text-red-500 font-bold uppercase italic tracking-widest text-xs">Error: ${e.message}</td></tr>`;
+        console.error("Fetch Error:", e);
     }
 }
 
@@ -67,8 +68,6 @@ function applyFilters() {
 
 function updateDashboard(data) {
     const total = data.length;
-    
-    // Hitung status (Case Insensitive)
     const cNew = data.filter(i => String(i.status_apo).toUpperCase() === 'NEW').length;
     const cProses = data.filter(i => String(i.status_apo).toUpperCase() === 'PROSES').length;
     const cPacking = data.filter(i => String(i.status_apo).toUpperCase() === 'PACKING').length;
@@ -85,9 +84,7 @@ function updateDashboard(data) {
     
     const rev = data.reduce((acc, curr) => acc + (parseFloat(curr.revenue) || 0), 0);
     document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { 
-        style: 'currency', 
-        currency: 'IDR', 
-        maximumFractionDigits: 0 
+        style: 'currency', currency: 'IDR', maximumFractionDigits: 0 
     }).format(rev);
 }
 
@@ -95,7 +92,6 @@ function renderTable(data) {
     const tbody = document.getElementById('main-table-body');
     tbody.innerHTML = '';
     
-    // Set Waktu Sekarang ke 00:00:00 untuk perbandingan tanggal yang akurat
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -108,19 +104,15 @@ function renderTable(data) {
         let slaStr = "-";
         let slaClass = "text-slate-400";
 
-        // Logika SLA menggunakan ISO String yang dikirim Backend
         if (item.jadwal_kirim) {
-            const jadwalDate = new Date(item.jadwal_kirim);
-            if (!isNaN(jadwalDate.getTime())) {
-                const jadwal = new Date(jadwalDate.getFullYear(), jadwalDate.getMonth(), jadwalDate.getDate());
-                
-                // Hitung selisih hari
-                const diffTime = jadwal - today;
-                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            const jDate = new Date(item.jadwal_kirim);
+            if (!isNaN(jDate.getTime())) {
+                const jadwal = new Date(jDate.getFullYear(), jDate.getMonth(), jDate.getDate());
+                const diffDays = Math.round((jadwal - today) / (1000 * 60 * 60 * 24));
                 
                 if (diffDays < 0) {
                     slaStr = `${diffDays} HR`;
-                    slaClass = "text-red-600 font-black italic underline decoration-red-200 decoration-2";
+                    slaClass = "text-red-600 font-black italic underline decoration-red-200";
                 } else if (diffDays === 0) {
                     slaStr = "HARI INI";
                     slaClass = "text-orange-500 font-black bg-orange-50 px-2 py-1 rounded-md";
@@ -139,15 +131,15 @@ function renderTable(data) {
             <tr class="transition-all duration-200 border-b border-slate-50 hover:bg-slate-50/50">
                 <td data-label="Toko & Wilayah" class="px-8 py-5">
                     <div class="flex flex-col">
-                        <span class="font-extrabold text-slate-800 text-sm leading-tight">${item.toko}</span>
-                        <span class="text-[9px] text-blue-600 font-black uppercase tracking-widest mt-0.5">${item.wilayah || 'LAINNYA'}</span>
+                        <span class="font-extrabold text-slate-800 text-sm">${item.toko}</span>
+                        <span class="text-[9px] text-blue-600 font-black uppercase tracking-widest">${item.wilayah || 'LAINNYA'}</span>
                     </div>
                 </td>
                 <td data-label="Penerima" class="px-8 py-5">
-                    <span class="font-bold text-slate-600 uppercase text-[11px] tracking-tight">${item.nama || '-'}</span>
+                    <span class="font-bold text-slate-600 uppercase text-[11px]">${item.nama || '-'}</span>
                 </td>
                 <td data-label="No Pengiriman" class="px-8 py-5 text-center">
-                    <span class="font-mono text-slate-400 font-bold text-[10px] bg-slate-50 px-2 py-1 rounded border border-slate-100">${item.no_pengiriman || '-'}</span>
+                    <span class="font-mono text-slate-400 font-bold text-[10px] bg-slate-50 px-2 py-1 rounded border">${item.no_pengiriman || '-'}</span>
                 </td>
                 <td data-label="Status APO" class="px-8 py-5 text-center">
                     <span class="px-3 py-1 rounded-full border text-[9px] font-black tracking-widest ${badge}">
@@ -155,7 +147,7 @@ function renderTable(data) {
                     </span>
                 </td>
                 <td data-label="Status Shipment" class="px-8 py-5">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase italic leading-tight">${item.status_shipment || '-'}</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase italic">${item.status_shipment || '-'}</span>
                 </td>
                 <td data-label="SLA" class="px-8 py-5 text-center">
                     <span class="${slaClass} text-xs tracking-tighter">${slaStr}</span>
@@ -171,5 +163,5 @@ document.getElementById('filter-wilayah').addEventListener('change', applyFilter
 document.getElementById('filter-apo').addEventListener('change', applyFilters);
 document.getElementById('filter-shipment').addEventListener('change', applyFilters);
 
-// Inisialisasi
+// Inisialisasi data
 fetchData();
