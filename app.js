@@ -3,10 +3,12 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzmZgWuC1BEk2C57JIrFC_0
 
 let masterData = [];
 
+// Fungsi untuk mengambil data (Hanya berjalan saat dipanggil/klik tombol)
 async function fetchData() {
     const tbody = document.getElementById('main-table-body');
     const loading = document.getElementById('loading-state');
     
+    // Tampilkan loading, sembunyikan tabel
     loading.classList.remove('hidden');
     tbody.classList.add('hidden');
 
@@ -22,7 +24,8 @@ async function fetchData() {
         updateStats(masterData);
         renderTable(masterData);
         
-        document.getElementById('last-update').innerText = `Terakhir update: ${new Date().toLocaleTimeString()}`;
+        // Update keterangan waktu terakhir sinkron
+        document.getElementById('last-update').innerText = `Update Terakhir: ${new Date().toLocaleTimeString()} (Manual)`;
     } catch (error) {
         console.error("Gagal load data:", error);
         tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Data Gagal Dimuat: ${error.message}</td></tr>`;
@@ -37,7 +40,7 @@ function renderTable(data) {
     tbody.innerHTML = '';
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-slate-400">Tidak ada pesanan pending ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-slate-400 font-medium italic">Tidak ada antrean pesanan yang ditemukan.</td></tr>`;
         return;
     }
 
@@ -49,7 +52,7 @@ function renderTable(data) {
             <tr class="border-b border-slate-100 hover:bg-slate-50 transition text-sm">
                 <td class="p-4">
                     <div class="font-bold text-slate-900">${item.toko}</div>
-                    <div class="text-[10px] text-slate-500 uppercase font-semibold">${item.wilayah}</div>
+                    <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">${item.wilayah}</div>
                 </td>
                 <td class="p-4 font-medium">${item.nama}</td>
                 <td class="p-4 text-xs font-mono text-slate-500">${item.no_pengiriman}</td>
@@ -57,8 +60,8 @@ function renderTable(data) {
                     <span class="px-2 py-1 rounded-full text-[10px] font-bold ${apoClass}">${item.status_apo}</span>
                 </td>
                 <td class="p-4">
-                    <div class="flex items-center text-xs">
-                        <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
+                    <div class="flex items-center text-xs font-medium text-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
                         ${item.status_shipment}
                     </div>
                 </td>
@@ -103,8 +106,11 @@ function filterData() {
     renderTable(filtered);
 }
 
+// Event Listeners
 document.getElementById('search-input').addEventListener('input', filterData);
 document.getElementById('filter-wilayah').addEventListener('change', filterData);
 
+// Ambil data pertama kali saat halaman dibuka
 fetchData();
-setInterval(fetchData, 60000); // Auto-refresh setiap 1 menit
+
+// AUTO REFRESH DIHAPUS
