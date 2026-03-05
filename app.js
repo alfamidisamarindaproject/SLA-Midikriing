@@ -1,14 +1,16 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbylmkVBS7XlSLIJXt9YHtiBSWPycRYpQHqn5nUVxP92nG1-ejPFaf5W0fB4LdOzdAo/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycby9OiuTcYWDmF-CgKQP3sx8XC_jeS897K2HIHbKliGXIo9t0g5qkpjBhSGhyp2j1vRS/exec"; 
 let masterData = [];
 
 async function fetchData() {
     const updateLabel = document.getElementById('gsheet-update');
     const statusText = document.getElementById('status-text');
+    const tbody = document.getElementById('main-table-body');
+
     try {
         const response = await fetch(API_URL);
         const resJson = await response.json();
         
-        if (resJson.error) { alert(resJson.error); return; }
+        if (resJson.error) throw new Error(resJson.error);
 
         updateLabel.innerText = `Data Update: ${resJson.dataUpdate}`;
         statusText.innerText = "Online";
@@ -16,10 +18,7 @@ async function fetchData() {
         
         masterData = resJson.data;
         
-        // Inisialisasi Dropdown (PENTING: Harus sama dengan key di JSON)
         setupDropdown('filter-wilayah', 'wilayah', 'Wilayah');
-        setupDropdown('filter-am', 'am', 'AM');
-        setupDropdown('filter-ac', 'ac', 'AC');
         setupDropdown('filter-apo', 'status_apo', 'APO');
         setupDropdown('filter-shipment', 'status_shipment', 'Shipment');
 
@@ -27,13 +26,15 @@ async function fetchData() {
     } catch (e) {
         updateLabel.innerText = "Gagal Sinkron!";
         statusText.innerText = "Offline";
+        statusText.className = "text-xs font-bold text-red-600 uppercase italic";
+        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase italic">Error: Koneksi Gagal</td></tr>`;
     }
 }
 
 function setupDropdown(id, key, label) {
     const dropdown = document.getElementById(id);
     if (!dropdown) return;
-    const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(val => val && val !== "-").sort();
+    const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
     dropdown.innerHTML = `<option value="">Semua ${label}</option>`;
     uniqueValues.forEach(val => {
         dropdown.insertAdjacentHTML('beforeend', `<option value="${val}">${val}</option>`);
@@ -43,8 +44,6 @@ function setupDropdown(id, key, label) {
 function applyFilters() {
     const sVal = document.getElementById('search-input').value.toLowerCase();
     const wVal = document.getElementById('filter-wilayah').value;
-    const amVal = document.getElementById('filter-am').value;
-    const acVal = document.getElementById('filter-ac').value;
     const aVal = document.getElementById('filter-apo').value;
     const shVal = document.getElementById('filter-shipment').value;
 
@@ -53,21 +52,40 @@ function applyFilters() {
                         (item.toko || "").toLowerCase().includes(sVal) || 
                         (item.no_pengiriman || "").toLowerCase().includes(sVal);
         const mWil = wVal === "" || item.wilayah === wVal;
-        const mAm = amVal === "" || item.am === amVal;
-        const mAc = acVal === "" || item.ac === acVal;
         const mApo = aVal === "" || item.status_apo === aVal;
         const mShip = shVal === "" || item.status_shipment === shVal;
-        return mSearch && mWil && mAm && mAc && mApo && mShip;
+        return mSearch && mWil && mApo && mShip;
     });
 
     updateDashboard(filtered);
     renderTable(filtered);
 }
 
+function updateDashboard(data) {
+    const total = data.length;
+    const cNew = data.filter(i => i.status_apo === 'NEW').length;
+    const cProses = data.filter(i => i.status_apo === 'PROSES').length;
+    const cPacking = data.filter(i => i.status_apo === 'PACKING').length;
+
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-new').innerText = cNew;
+    document.getElementById('stat-proses').innerText = cProses;
+    document.getElementById('stat-packing').innerText = cPacking;
+
+    const calc = (n) => total > 0 ? ((n/total)*100).toFixed(1) + '%' : '0%';
+    document.getElementById('perc-new').innerText = calc(cNew);
+    document.getElementById('perc-proses').innerText = calc(cProses);
+    document.getElementById('perc-packing').innerText = calc(cPacking);
+    
+    const rev = data.reduce((acc, curr) => acc + curr.revenue, 0);
+    document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(rev);
+}
+
 function renderTable(data) {
     const tbody = document.getElementById('main-table-body');
     tbody.innerHTML = '';
-    const skrg = new Date(); skrg.setHours(0,0,0,0);
+    const skrg = new Date();
+    skrg.setHours(0,0,0,0);
 
     data.forEach(item => {
         let slaStr = "-";
@@ -96,7 +114,7 @@ function renderTable(data) {
                       item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600';
 
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-slate-50 text-[11px] border-b border-slate-100 transition-all">
+            <tr class="hover:bg-slate-50 text-[11px] border-b border-slate-100 italic transition-all">
                 <td class="px-6 py-4 font-black text-slate-800">
                     ${item.toko}<br>
                     <span class="text-[9px] text-blue-500 font-black uppercase">${item.wilayah}</span>
@@ -113,31 +131,8 @@ function renderTable(data) {
     });
 }
 
-function updateDashboard(data) {
-    const total = data.length;
-    const cNew = data.filter(i => i.status_apo === 'NEW').length;
-    const cProses = data.filter(i => i.status_apo === 'PROSES').length;
-    const cPacking = data.filter(i => i.status_apo === 'PACKING').length;
-
-    document.getElementById('stat-total').innerText = total;
-    document.getElementById('stat-new').innerText = cNew;
-    document.getElementById('stat-proses').innerText = cProses;
-    document.getElementById('stat-packing').innerText = cPacking;
-
-    const calc = (n) => total > 0 ? ((n/total)*100).toFixed(1) + '%' : '0%';
-    document.getElementById('perc-new').innerText = calc(cNew);
-    document.getElementById('perc-proses').innerText = calc(cProses);
-    document.getElementById('perc-packing').innerText = calc(cPacking);
-    
-    const rev = data.reduce((acc, curr) => acc + curr.revenue, 0);
-    document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(rev);
-}
-
-// Event Listeners
 document.getElementById('search-input').addEventListener('input', applyFilters);
 document.getElementById('filter-wilayah').addEventListener('change', applyFilters);
-document.getElementById('filter-am').addEventListener('change', applyFilters);
-document.getElementById('filter-ac').addEventListener('change', applyFilters);
 document.getElementById('filter-apo').addEventListener('change', applyFilters);
 document.getElementById('filter-shipment').addEventListener('change', applyFilters);
 
