@@ -9,35 +9,37 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans p-6">
     <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h1 class="text-2xl font-bold mb-4 text-blue-600">Monitoring SLA MidiKriing</h1>
-        <p class="mb-6 text-gray-600">Menampilkan pesanan yang <strong>belum terkirim</strong> (Shipment Status bukan "SUDAH DI TERIMA OLEH CUSTOMER") dalam <strong>2 hari ke belakang</strong> dari hari ini.</p>
+        <h1 class="text-2xl font-bold mb-4 text-blue-600">Monitoring SLA MidiKriing (GSheets Sync)</h1>
+        <p class="mb-6 text-gray-600">Menampilkan pesanan yang <strong>belum terkirim</strong> dalam <strong>2 hari ke belakang</strong> beserta info AC dan AM untuk kemudahan Follow Up.</p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div class="p-4 border rounded bg-gray-50">
-                <label class="block font-semibold mb-2" for="dataFile">Upload File Data (.csv):</label>
-                <input type="file" id="dataFile" accept=".csv" class="w-full">
+                <label class="block font-semibold mb-2" for="dataUrl">Link CSV Sheet "Data":</label>
+                <input type="text" id="dataUrl" placeholder="Paste link Publish to web (CSV) Sheet Data di sini" class="w-full p-2 border rounded">
             </div>
             <div class="p-4 border rounded bg-gray-50">
-                <label class="block font-semibold mb-2" for="strukturFile">Upload File Struktur (.csv) - Opsional:</label>
-                <input type="file" id="strukturFile" accept=".csv" class="w-full">
+                <label class="block font-semibold mb-2" for="strukturUrl">Link CSV Sheet "Struktur":</label>
+                <input type="text" id="strukturUrl" placeholder="Paste link Publish to web (CSV) Sheet Struktur di sini" class="w-full p-2 border rounded">
             </div>
         </div>
 
-        <button id="processBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Proses Data</button>
+        <button id="processBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Tarik & Proses Data</button>
+        <span id="loadingText" class="ml-4 text-blue-600 font-semibold hidden">Mengambil data dari Google Sheets...</span>
 
         <div id="resultsArea" class="mt-8 hidden">
             <h2 class="text-xl font-bold mb-4">Hasil Monitoring (<span id="countData">0</span> Pesanan)</h2>
             <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border">
+                <table class="min-w-full bg-white border text-sm">
                     <thead class="bg-gray-200">
                         <tr>
-                            <th class="py-2 px-4 border text-left">Kode Toko</th>
-                            <th class="py-2 px-4 border text-left">Nama Toko</th>
-                            <th class="py-2 px-4 border text-left">Wilayah (Struktur)</th>
-                            <th class="py-2 px-4 border text-left">No Pengiriman</th>
-                            <th class="py-2 px-4 border text-left">Penerima</th>
-                            <th class="py-2 px-4 border text-left">Tgl Kirim (Send Date)</th>
-                            <th class="py-2 px-4 border text-left">Shipment Status</th>
+                            <th class="py-2 px-3 border text-left">Kode Toko</th>
+                            <th class="py-2 px-3 border text-left">Nama Toko</th>
+                            <th class="py-2 px-3 border text-left">Wilayah</th>
+                            <th class="py-2 px-3 border text-left bg-yellow-100">AC</th>
+                            <th class="py-2 px-3 border text-left bg-yellow-100">AM</th>
+                            <th class="py-2 px-3 border text-left">No Pengiriman</th>
+                            <th class="py-2 px-3 border text-left">Tgl Kirim</th>
+                            <th class="py-2 px-3 border text-left">Shipment Status</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
