@@ -13,9 +13,9 @@ async function fetchData() {
         if (resJson.error) throw new Error(resJson.error);
 
         // Update Header & Status
-        updateLabel.innerText = `Update: ${resJson.dataUpdate || 'Baru Saja'}`;
+        updateLabel.innerText = `Sync: ${resJson.dataUpdate || 'Baru Saja'}`;
         statusText.innerText = "Online";
-        statusText.className = "text-xs font-bold text-green-600 uppercase";
+        statusText.className = "text-xs font-extrabold text-green-500 uppercase italic";
         
         masterData = resJson.data;
         
@@ -24,13 +24,13 @@ async function fetchData() {
         setupDropdown('filter-apo', 'status_apo', 'APO');
         setupDropdown('filter-shipment', 'status_shipment', 'Shipment');
 
-        // Jalankan Filter Pertama Kali (Menampilkan Dashboard & Tabel)
+        // Jalankan Filter Pertama Kali
         applyFilters(); 
     } catch (e) {
         updateLabel.innerText = "Gagal Sinkron!";
         statusText.innerText = "Offline";
-        statusText.className = "text-xs font-bold text-red-600 uppercase";
-        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase italic">Koneksi Error: Hubungi Administrator</td></tr>`;
+        statusText.className = "text-xs font-extrabold text-red-500 uppercase italic";
+        tbody.innerHTML = `<tr><td colspan="6" class="p-20 text-center text-red-500 font-bold uppercase italic tracking-widest text-xs">Koneksi Error: Hubungi Administrator</td></tr>`;
         console.error(e);
     }
 }
@@ -61,7 +61,6 @@ function applyFilters() {
         return mSearch && mWil && mApo && mShip;
     });
 
-    // PENTING: Update Dashboard dulu baru Render Tabel
     updateDashboard(filtered);
     renderTable(filtered);
 }
@@ -69,24 +68,21 @@ function applyFilters() {
 function updateDashboard(data) {
     const total = data.length;
     
-    // Hitung berdasarkan status APO (Case Insensitive)
+    // Hitung status (Case Insensitive)
     const cNew = data.filter(i => String(i.status_apo).toUpperCase() === 'NEW').length;
     const cProses = data.filter(i => String(i.status_apo).toUpperCase() === 'PROSES').length;
     const cPacking = data.filter(i => String(i.status_apo).toUpperCase() === 'PACKING').length;
 
-    // Update Angka di Card
     document.getElementById('stat-total').innerText = total;
     document.getElementById('stat-new').innerText = cNew;
     document.getElementById('stat-proses').innerText = cProses;
     document.getElementById('stat-packing').innerText = cPacking;
 
-    // Hitung Persentase
     const calc = (n) => total > 0 ? ((n/total)*100).toFixed(1) + '%' : '0%';
     document.getElementById('perc-new').innerText = calc(cNew);
     document.getElementById('perc-proses').innerText = calc(cProses);
     document.getElementById('perc-packing').innerText = calc(cPacking);
     
-    // Hitung Revenue
     const rev = data.reduce((acc, curr) => acc + (parseFloat(curr.revenue) || 0), 0);
     document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { 
         style: 'currency', 
@@ -102,7 +98,7 @@ function renderTable(data) {
     today.setHours(0,0,0,0);
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-slate-400 font-bold uppercase italic">Data Tidak Ditemukan</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-20 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Data Tidak Ditemukan</td></tr>`;
         return;
     }
 
@@ -110,6 +106,7 @@ function renderTable(data) {
         let slaStr = "-";
         let slaClass = "text-slate-400";
 
+        // Logika SLA
         if (item.jadwal_kirim) {
             const jadwal = new Date(item.jadwal_kirim);
             if (!isNaN(jadwal.getTime())) {
@@ -117,45 +114,59 @@ function renderTable(data) {
                 const diff = Math.ceil((jadwal - today) / (1000 * 60 * 60 * 24));
                 
                 if (diff < 0) {
-                    slaStr = `${diff} Hr`;
-                    slaClass = "text-red-600 font-black italic";
+                    slaStr = `${diff} HR`;
+                    slaClass = "text-red-600 font-black italic underline decoration-red-200 decoration-2";
                 } else if (diff === 0) {
                     slaStr = "HARI INI";
-                    slaClass = "text-orange-500 font-black";
+                    slaClass = "text-orange-500 font-black bg-orange-50 px-2 py-1 rounded-md";
                 } else {
-                    slaStr = `+${diff} Hr`;
-                    slaClass = "text-emerald-600 font-bold";
+                    slaStr = `+${diff} HR`;
+                    slaClass = "text-emerald-600 font-extrabold";
                 }
             }
         }
 
-        const badge = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600' : 
-                      item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600' : 
-                      'bg-emerald-50 text-emerald-600';
+        // Color Badge Status APO
+        const badge = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600 border-red-100' : 
+                      item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600 border-orange-100' : 
+                      'bg-emerald-50 text-emerald-600 border-emerald-100';
 
+        // Template baris dengan atribut data-label untuk responsif mobile
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-slate-50 text-[11px] border-b border-slate-100 italic transition-all">
-                <td class="px-6 py-4 font-black text-slate-800">
-                    ${item.toko}<br>
-                    <span class="text-[9px] text-blue-500 font-black uppercase tracking-tighter">${item.wilayah || 'LAINNYA'}</span>
+            <tr class="transition-all duration-200">
+                <td data-label="Toko & Wilayah" class="px-8 py-5">
+                    <div class="flex flex-col">
+                        <span class="font-extrabold text-slate-800 text-sm leading-tight">${item.toko}</span>
+                        <span class="text-[9px] text-blue-600 font-black uppercase tracking-widest mt-0.5">${item.wilayah || 'LAINNYA'}</span>
+                    </div>
                 </td>
-                <td class="px-6 py-4 font-semibold text-slate-600 uppercase">${item.nama || '-'}</td>
-                <td class="px-6 py-4 text-center font-mono text-slate-400 italic">${item.no_pengiriman || '-'}</td>
-                <td class="px-6 py-4 text-center">
-                    <span class="px-2 py-0.5 rounded border font-black text-[9px] ${badge}">${item.status_apo || 'NEW'}</span>
+                <td data-label="Penerima" class="px-8 py-5">
+                    <span class="font-bold text-slate-600 uppercase text-[11px] tracking-tight">${item.nama || '-'}</span>
                 </td>
-                <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[9px] italic">${item.status_shipment || '-'}</td>
-                <td class="px-6 py-4 text-center ${slaClass}">${slaStr}</td>
+                <td data-label="No Pengiriman" class="px-8 py-5 text-center">
+                    <span class="font-mono text-slate-400 font-bold text-[10px] bg-slate-50 px-2 py-1 rounded border border-slate-100">${item.no_pengiriman || '-'}</span>
+                </td>
+                <td data-label="Status APO" class="px-8 py-5 text-center">
+                    <span class="px-3 py-1 rounded-full border text-[9px] font-black tracking-widest ${badge}">
+                        ${item.status_apo || 'NEW'}
+                    </span>
+                </td>
+                <td data-label="Status Shipment" class="px-8 py-5">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase italic leading-tight">${item.status_shipment || '-'}</span>
+                </td>
+                <td data-label="SLA" class="px-8 py-5 text-center">
+                    <span class="${slaClass} text-xs tracking-tighter">${slaStr}</span>
+                </td>
             </tr>
         `);
     });
 }
 
-// Listeners untuk Filter
+// Listeners
 document.getElementById('search-input').addEventListener('input', applyFilters);
 document.getElementById('filter-wilayah').addEventListener('change', applyFilters);
 document.getElementById('filter-apo').addEventListener('change', applyFilters);
 document.getElementById('filter-shipment').addEventListener('change', applyFilters);
 
-// Jalankan Fetch
+// Start
 fetchData();
