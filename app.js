@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzmZgWuC1BEk2C57JIrFC_0aAtly8D93NHf-sN5mXYr5LjSDCHmCItwzUWOTX1YB87e/exec"; // Pastikan ini sudah diisi
+const API_URL = "https://script.google.com/macros/s/AKfycbx2K81E_U9sZKt0YDcPv8zdiJ06TdXIUgI-fBqU-JGtqWfCct3Tyn8oSUFZFzfvBF0X/exec"; // Masukkan URL Web App Anda
 
 let masterData = [];
 
@@ -17,65 +17,66 @@ async function fetchData() {
 
         masterData = data;
         
-        // Inisialisasi Filter Dropdown secara dinamis dari data
-        populateDropdown('filter-wilayah', 'wilayah');
-        populateDropdown('filter-apo', 'status_apo');
-        populateDropdown('filter-shipment', 'status_shipment');
-
-        // Jalankan Filter Pertama Kali
-        filterData();
+        // Isi pilihan dropdown secara otomatis dari data
+        initDropdowns();
         
-        document.getElementById('last-update').innerText = `Update: ${new Date().toLocaleTimeString()} (Manual)`;
+        // Jalankan fungsi filter (akan merender tabel & angka statistik pertama kali)
+        applyFilters();
+        
+        document.getElementById('last-update').innerText = `Terakhir Sinkron: ${new Date().toLocaleTimeString()}`;
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">Gagal: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Gagal memuat data: ${error.message}</td></tr>`;
     } finally {
         loading.classList.add('hidden');
         tbody.classList.remove('hidden');
     }
 }
 
-// Fungsi Mengisi Dropdown secara otomatis dari data unik
-function populateDropdown(elementId, key) {
-    const select = document.getElementById(elementId);
-    const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
-    
-    const label = elementId.split('-')[1].toUpperCase();
-    select.innerHTML = `<option value="">Semua ${label}</option>`;
-    
-    uniqueValues.forEach(val => {
-        select.insertAdjacentHTML('beforeend', `<option value="${val}">${val}</option>`);
-    });
+function initDropdowns() {
+    const createOption = (id, key, label) => {
+        const el = document.getElementById(id);
+        const values = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
+        el.innerHTML = `<option value="">Semua ${label}</option>`;
+        values.forEach(v => el.insertAdjacentHTML('beforeend', `<option value="${v}">${v}</option>`));
+    };
+
+    createOption('filter-wilayah', 'wilayah', 'Wilayah');
+    createOption('filter-apo', 'status_apo', 'Status APO');
+    createOption('filter-shipment', 'status_shipment', 'Shipment');
 }
 
-function filterData() {
-    const search = document.getElementById('search-input').value.toLowerCase();
-    const fWilayah = document.getElementById('filter-wilayah').value;
-    const fApo = document.getElementById('filter-apo').value;
-    const fShip = document.getElementById('filter-shipment').value;
+function applyFilters() {
+    const sSearch = document.getElementById('search-input').value.toLowerCase();
+    const sWilayah = document.getElementById('filter-wilayah').value;
+    const sApo = document.getElementById('filter-apo').value;
+    const sShip = document.getElementById('filter-shipment').value;
 
-    // Filter Data Utama
+    // Proses Penyaringan
     const filtered = masterData.filter(item => {
-        return (
-            (item.nama.toLowerCase().includes(search) || item.toko.toLowerCase().includes(search) || item.no_pengiriman.toLowerCase().includes(search)) &&
-            (fWilayah === "" || item.wilayah === fWilayah) &&
-            (fApo === "" || item.status_apo === fApo) &&
-            (fShip === "" || item.status_shipment === fShip)
-        );
+        const matchSearch = item.nama.toLowerCase().includes(sSearch) || 
+                            item.toko.toLowerCase().includes(sSearch) || 
+                            item.no_pengiriman.toLowerCase().includes(sSearch);
+        const matchWilayah = sWilayah === "" || item.wilayah === sWilayah;
+        const matchApo = sApo === "" || item.status_apo === sApo;
+        const matchShip = sShip === "" || item.status_shipment === sShip;
+
+        return matchSearch && matchWilayah && matchApo && matchShip;
     });
 
     renderTable(filtered);
-    updateStats(filtered); // Update angka statistik berdasarkan hasil filter
+    updateStats(filtered);
 }
 
-function updateStats(filteredData) {
-    const total = filteredData.length;
-    const proses = filteredData.filter(i => i.status_apo === 'PROSES' || i.status_apo === 'PACKING').length;
-    const revenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
+function updateStats(data) {
+    const total = data.length;
+    const proses = data.filter(i => ["PROSES", "PACKING"].includes(i.status_apo.toUpperCase())).length;
+    const revenue = data.reduce((sum, i) => sum + i.revenue, 0);
 
-    document.getElementById('stat-total').innerText = total;
-    document.getElementById('stat-proses').innerText = proses;
-    document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { 
-        style: 'currency', currency: 'IDR', maximumFractionDigits: 0 
+    // Animasi angka sederhana
+    document.getElementById('stat-total').innerText = total.toLocaleString('id-ID');
+    document.getElementById('stat-proses').innerText = proses.toLocaleString('id-ID');
+    document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', {
+        style: 'currency', currency: 'IDR', maximumFractionDigits: 0
     }).format(revenue);
 }
 
@@ -84,28 +85,28 @@ function renderTable(data) {
     tbody.innerHTML = '';
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-slate-400">Data tidak ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 italic">Data tidak ditemukan untuk filter ini.</td></tr>`;
         return;
     }
 
     data.forEach(item => {
-        const apoClass = item.status_apo === 'NEW' ? 'bg-red-100 text-red-700' : 
-                         (item.status_apo === 'PROSES' || item.status_apo === 'PACKING') ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
+        const apoColor = item.status_apo === 'NEW' ? 'bg-red-100 text-red-700' : 
+                         ['PROSES', 'PACKING'].includes(item.status_apo) ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
 
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="border-b border-slate-100 hover:bg-slate-50 transition text-sm">
-                <td class="p-4">
-                    <div class="font-bold text-slate-900">${item.toko}</div>
-                    <div class="text-[10px] text-slate-400 uppercase font-bold">${item.wilayah}</div>
+            <tr class="hover:bg-blue-50/30 transition-colors">
+                <td class="p-5">
+                    <div class="font-bold text-gray-900">${item.toko}</div>
+                    <div class="text-[10px] text-blue-500 font-black uppercase tracking-widest">${item.wilayah}</div>
                 </td>
-                <td class="p-4 font-medium">${item.nama}</td>
-                <td class="p-4 text-xs font-mono text-slate-500">${item.no_pengiriman}</td>
-                <td class="p-4 text-center">
-                    <span class="px-2 py-1 rounded-full text-[10px] font-bold ${apoClass}">${item.status_apo}</span>
+                <td class="p-5 font-semibold text-gray-700">${item.nama}</td>
+                <td class="p-5 font-mono text-xs text-gray-400">${item.no_pengiriman}</td>
+                <td class="p-5 text-center">
+                    <span class="px-3 py-1 rounded-lg text-[10px] font-black ${apoColor}">${item.status_apo}</span>
                 </td>
-                <td class="p-4 text-xs">
-                    <div class="flex items-center text-slate-600">
-                        <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
+                <td class="p-5">
+                    <div class="flex items-center text-xs font-bold text-gray-600">
+                        <span class="w-2 h-2 rounded-full bg-green-500 mr-2 shadow-sm"></span>
                         ${item.status_shipment}
                     </div>
                 </td>
@@ -114,10 +115,11 @@ function renderTable(data) {
     });
 }
 
-// Event Listeners
-document.getElementById('search-input').addEventListener('input', filterData);
-document.getElementById('filter-wilayah').addEventListener('change', filterData);
-document.getElementById('filter-apo').addEventListener('change', filterData);
-document.getElementById('filter-shipment').addEventListener('change', filterData);
+// Tambahkan listener ke semua input filter
+['search-input', 'filter-wilayah', 'filter-apo', 'filter-shipment'].forEach(id => {
+    document.getElementById(id).addEventListener('input', applyFilters);
+    document.getElementById(id).addEventListener('change', applyFilters);
+});
 
+// Jalankan saat pertama kali dibuka
 fetchData();
