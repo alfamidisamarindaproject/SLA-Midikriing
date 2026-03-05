@@ -14,30 +14,39 @@
                 <h1 class="text-2xl font-bold text-slate-800">Monitoring Pesanan <span class="text-blue-600">Midikriing</span></h1>
                 <p id="last-update" class="text-xs text-slate-500 italic">Memuat...</p>
             </div>
-            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition shadow-sm">
-                <i class="fas fa-sync-alt mr-2"></i> Sinkron Data
+            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition shadow-sm font-bold">
+                <i class="fas fa-sync-alt mr-2"></i> Sinkron Data Sekarang
             </button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <p class="text-slate-500 text-xs font-semibold uppercase">Total Belum Terkirim</p>
+                <p class="text-slate-500 text-xs font-semibold uppercase italic">Total Terfilter</p>
                 <h2 id="stat-total" class="text-3xl font-black text-slate-800">-</h2>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <p class="text-orange-500 text-xs font-semibold uppercase">Dalam Proses / Packing</p>
+                <p class="text-orange-500 text-xs font-semibold uppercase italic">Proses/Packing Terfilter</p>
                 <h2 id="stat-proses" class="text-3xl font-black text-orange-500">-</h2>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <p class="text-emerald-600 text-xs font-semibold uppercase">Potensi Revenue</p>
+                <p class="text-emerald-600 text-xs font-semibold uppercase italic">Revenue Terfilter</p>
                 <h2 id="stat-revenue" class="text-3xl font-black text-emerald-600">-</h2>
             </div>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-4 mb-6">
-            <input type="text" id="search-input" placeholder="Cari nama atau nomor..." class="flex-1 p-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
-            <select id="filter-wilayah" class="p-2 rounded-lg border border-slate-300 bg-white min-w-[200px]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <input type="text" id="search-input" placeholder="Cari nama/no pengiriman..." class="p-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+            
+            <select id="filter-wilayah" class="p-2 rounded-lg border border-slate-300 bg-white shadow-sm">
                 <option value="">Semua Wilayah</option>
+            </select>
+
+            <select id="filter-apo" class="p-2 rounded-lg border border-slate-300 bg-white shadow-sm font-semibold">
+                <option value="">Semua Status APO</option>
+            </select>
+
+            <select id="filter-shipment" class="p-2 rounded-lg border border-slate-300 bg-white shadow-sm text-xs">
+                <option value="">Semua Status Shipment</option>
             </select>
         </div>
 
@@ -48,7 +57,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-tighter">
+                        <tr class="bg-slate-100 text-slate-600 text-[10px] uppercase font-bold tracking-widest">
                             <th class="p-4 border-b">Toko / Wilayah</th>
                             <th class="p-4 border-b">Penerima</th>
                             <th class="p-4 border-b">No. Pengiriman</th>
@@ -57,7 +66,7 @@
                         </tr>
                     </thead>
                     <tbody id="main-table-body" class="divide-y divide-slate-100">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
