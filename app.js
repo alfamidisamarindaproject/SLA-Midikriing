@@ -14,8 +14,8 @@ async function fetchData() {
         
         if (resJson.error) throw new Error(resJson.error);
 
-        // Update Label Sync (WITA)
-        updateLabel.innerText = `Sync: ${resJson.dataUpdate || 'Baru Saja'}`;
+        // Update Label: "Data Update" (WITA)
+        updateLabel.innerText = `Data Update: ${resJson.dataUpdate || 'Baru Saja'}`;
         statusText.innerText = "Online";
         statusText.className = "text-xs font-extrabold text-green-500 uppercase italic";
         
@@ -40,7 +40,10 @@ function setupDropdown(id, key, label) {
     const dropdown = document.getElementById(id);
     if (!dropdown) return;
     const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
+    
+    // Mengubah "Semua" menjadi "All"
     dropdown.innerHTML = `<option value="">All ${label}</option>`;
+    
     uniqueValues.forEach(val => {
         dropdown.insertAdjacentHTML('beforeend', `<option value="${val}">${val}</option>`);
     });
