@@ -1,17 +1,23 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwa2BXzENfHWB9RpHaoArQ1sA550qBFHoTu97bLgJuX1NoBEIGTz2LxTsqS1F3Kj7lK/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycby6oR-uygFYKeDHa9DJQI_B4ZYGJpdSv952mai3nPKKQAb6-uXE6JbU-brdN1E4jSVD/exec"; 
 
 let masterData = [];
 
 async function fetchData() {
     const tbody = document.getElementById('main-table-body');
     const updateLabel = document.getElementById('gsheet-update');
+    const statusText = document.getElementById('status-text');
 
     try {
         const response = await fetch(API_URL);
         const resJson = await response.json();
         
-        // Fitur Terkini: Tampilkan waktu edit terakhir GSheet
+        if (resJson.error) {
+            throw new Error(resJson.error);
+        }
+
         updateLabel.innerText = `GSheet Update: ${resJson.lastEdit}`;
+        statusText.innerText = "Online / Real-time";
+        statusText.classList.add("text-green-600");
         
         masterData = resJson.data;
         
@@ -21,8 +27,11 @@ async function fetchData() {
 
         applyFilters();
     } catch (e) {
+        console.error(e);
         updateLabel.innerText = "Koneksi Terputus!";
-        tbody.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase italic">Data Gagal Dimuat. Periksa URL Deployment.</td></tr>';
+        statusText.innerText = "Offline / Error";
+        statusText.classList.add("text-red-600");
+        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase italic">Error: ${e.message}</td></tr>`;
     }
 }
 
@@ -74,6 +83,11 @@ function renderTable(data) {
     const hariIni = new Date();
     hariIni.setHours(0,0,0,0);
 
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-400 uppercase italic font-bold">Data tidak ditemukan</td></tr>';
+        return;
+    }
+
     data.forEach(item => {
         let tglFormat = "-";
         let slaText = "-";
@@ -82,7 +96,6 @@ function renderTable(data) {
         if (item.jadwal_kirim) {
             const jadwal = new Date(item.jadwal_kirim);
             jadwal.setHours(0,0,0,0);
-            
             tglFormat = jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
             
             const diff = Math.ceil((jadwal - hariIni) / (1000 * 60 * 60 * 24));
@@ -110,7 +123,7 @@ function renderTable(data) {
                     <div class="text-[9px] text-blue-500 font-black uppercase italic">${item.wilayah}</div>
                 </td>
                 <td class="px-6 py-4 font-semibold text-slate-600 uppercase">${item.nama}</td>
-                <td class="px-6 py-4 text-center font-mono text-slate-400">${item.no_pengiriman}</td>
+                <td class="px-6 py-4 text-center font-mono text-slate-400 italic">${item.no_pengiriman}</td>
                 <td class="px-6 py-4 text-center">
                     <span class="px-2 py-0.5 rounded border font-black text-[9px] ${apoBadge}">${item.status_apo}</span>
                 </td>
@@ -122,7 +135,6 @@ function renderTable(data) {
     });
 }
 
-// Listeners
 document.getElementById('search-input').addEventListener('input', applyFilters);
 document.getElementById('filter-wilayah').addEventListener('change', applyFilters);
 document.getElementById('filter-apo').addEventListener('change', applyFilters);
