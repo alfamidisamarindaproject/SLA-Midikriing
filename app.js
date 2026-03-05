@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbx2K81E_U9sZKt0YDcPv8zdiJ06TdXIUgI-fBqU-JGtqWfCct3Tyn8oSUFZFzfvBF0X/exec"; // Masukkan URL Web App Anda
+const API_URL = "https://script.google.com/macros/s/AKfycbzwhfe9nVCiATs2lqSeiT5ohj2Ac65TKdySUycVMr_3zveuvcqvMdmAjuJKvSrNIbB9/exec"; // Masukkan URL Web App Anda
 
 let masterData = [];
 
@@ -11,73 +11,73 @@ async function fetchData() {
 
     try {
         const response = await fetch(API_URL);
-        const data = await response.json();
+        masterData = await response.json();
         
-        if (data.error) throw new Error(data.error);
+        if (masterData.error) throw new Error(masterData.error);
 
-        masterData = data;
+        // Isi Dropdown secara dinamis
+        fillDropdown('filter-wilayah', 'wilayah', 'Semua Wilayah');
+        fillDropdown('filter-apo', 'status_apo', 'Semua APO');
+        fillDropdown('filter-shipment', 'status_shipment', 'Semua Shipment');
+
+        // Jalankan filter & kalkulasi stats pertama kali
+        applyAllFilters();
         
-        // Isi pilihan dropdown secara otomatis dari data
-        initDropdowns();
-        
-        // Jalankan fungsi filter (akan merender tabel & angka statistik pertama kali)
-        applyFilters();
-        
-        document.getElementById('last-update').innerText = `Terakhir Sinkron: ${new Date().toLocaleTimeString()}`;
-    } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold">Gagal memuat data: ${error.message}</td></tr>`;
+        document.getElementById('last-update').innerText = `Sinkron terakhir: ${new Date().toLocaleTimeString()}`;
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500 font-bold italic">Koneksi Gagal: ${e.message}</td></tr>`;
     } finally {
         loading.classList.add('hidden');
         tbody.classList.remove('hidden');
     }
 }
 
-function initDropdowns() {
-    const createOption = (id, key, label) => {
-        const el = document.getElementById(id);
-        const values = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
-        el.innerHTML = `<option value="">Semua ${label}</option>`;
-        values.forEach(v => el.insertAdjacentHTML('beforeend', `<option value="${v}">${v}</option>`));
-    };
-
-    createOption('filter-wilayah', 'wilayah', 'Wilayah');
-    createOption('filter-apo', 'status_apo', 'Status APO');
-    createOption('filter-shipment', 'status_shipment', 'Shipment');
+function fillDropdown(id, key, label) {
+    const dropdown = document.getElementById(id);
+    const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
+    
+    dropdown.innerHTML = `<option value="">${label}</option>`;
+    uniqueValues.forEach(val => {
+        dropdown.insertAdjacentHTML('beforeend', `<option value="${val}">${val}</option>`);
+    });
 }
 
-function applyFilters() {
-    const sSearch = document.getElementById('search-input').value.toLowerCase();
-    const sWilayah = document.getElementById('filter-wilayah').value;
-    const sApo = document.getElementById('filter-apo').value;
-    const sShip = document.getElementById('filter-shipment').value;
+function applyAllFilters() {
+    const searchVal = document.getElementById('search-input').value.toLowerCase();
+    const wilayahVal = document.getElementById('filter-wilayah').value;
+    const apoVal = document.getElementById('filter-apo').value;
+    const shipmentVal = document.getElementById('filter-shipment').value;
 
-    // Proses Penyaringan
-    const filtered = masterData.filter(item => {
-        const matchSearch = item.nama.toLowerCase().includes(sSearch) || 
-                            item.toko.toLowerCase().includes(sSearch) || 
-                            item.no_pengiriman.toLowerCase().includes(sSearch);
-        const matchWilayah = sWilayah === "" || item.wilayah === sWilayah;
-        const matchApo = sApo === "" || item.status_apo === sApo;
-        const matchShip = sShip === "" || item.status_shipment === sShip;
+    // Filter Data
+    const filteredResults = masterData.filter(item => {
+        const matchSearch = item.nama.toLowerCase().includes(searchVal) || item.toko.toLowerCase().includes(searchVal) || item.no_pengiriman.toLowerCase().includes(searchVal);
+        const matchWilayah = wilayahVal === "" || item.wilayah === wilayahVal;
+        const matchApo = apoVal === "" || item.status_apo === apoVal;
+        const matchShipment = shipmentVal === "" || item.status_shipment === shipmentVal;
 
-        return matchSearch && matchWilayah && matchApo && matchShip;
+        return matchSearch && matchWilayah && matchApo && matchShipment;
     });
 
-    renderTable(filtered);
-    updateStats(filtered);
+    // Render Tabel & Update Stats
+    renderTable(filteredResults);
+    calculateStats(filteredResults);
 }
 
-function updateStats(data) {
+function calculateStats(data) {
     const total = data.length;
-    const proses = data.filter(i => ["PROSES", "PACKING"].includes(i.status_apo.toUpperCase())).length;
-    const revenue = data.reduce((sum, i) => sum + i.revenue, 0);
+    const countNew = data.filter(i => i.status_apo === 'NEW').length;
+    const countProses = data.filter(i => i.status_apo === 'PROSES').length;
+    const countPacking = data.filter(i => i.status_apo === 'PACKING').length;
+    const totalRevenue = data.reduce((acc, curr) => acc + curr.revenue, 0);
 
-    // Animasi angka sederhana
-    document.getElementById('stat-total').innerText = total.toLocaleString('id-ID');
-    document.getElementById('stat-proses').innerText = proses.toLocaleString('id-ID');
+    // Update Tampilan Angka (Dinamis Berdasarkan Filter)
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-new').innerText = countNew;
+    document.getElementById('stat-proses').innerText = countProses;
+    document.getElementById('stat-packing').innerText = countPacking;
     document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', {
         style: 'currency', currency: 'IDR', maximumFractionDigits: 0
-    }).format(revenue);
+    }).format(totalRevenue);
 }
 
 function renderTable(data) {
@@ -85,28 +85,28 @@ function renderTable(data) {
     tbody.innerHTML = '';
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400 italic">Data tidak ditemukan untuk filter ini.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-300 italic font-medium">Data tidak ditemukan untuk kriteria ini.</td></tr>`;
         return;
     }
 
     data.forEach(item => {
-        const apoColor = item.status_apo === 'NEW' ? 'bg-red-100 text-red-700' : 
-                         ['PROSES', 'PACKING'].includes(item.status_apo) ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
+        const apoClass = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600 border-red-200' : 
+                         item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200';
 
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-blue-50/30 transition-colors">
-                <td class="p-5">
-                    <div class="font-bold text-gray-900">${item.toko}</div>
-                    <div class="text-[10px] text-blue-500 font-black uppercase tracking-widest">${item.wilayah}</div>
+            <tr class="hover:bg-gray-50/80 transition-all border-b border-gray-50">
+                <td class="px-6 py-4">
+                    <div class="font-bold text-gray-800">${item.toko}</div>
+                    <div class="text-[9px] text-blue-500 font-black uppercase tracking-widest">${item.wilayah}</div>
                 </td>
-                <td class="p-5 font-semibold text-gray-700">${item.nama}</td>
-                <td class="p-5 font-mono text-xs text-gray-400">${item.no_pengiriman}</td>
-                <td class="p-5 text-center">
-                    <span class="px-3 py-1 rounded-lg text-[10px] font-black ${apoColor}">${item.status_apo}</span>
+                <td class="px-6 py-4 font-semibold text-gray-600">${item.nama}</td>
+                <td class="px-6 py-4 font-mono text-xs text-gray-400 uppercase tracking-tighter">${item.no_pengiriman}</td>
+                <td class="px-6 py-4 text-center">
+                    <span class="px-3 py-1 rounded-full text-[10px] font-black border ${apoClass}">${item.status_apo}</span>
                 </td>
-                <td class="p-5">
-                    <div class="flex items-center text-xs font-bold text-gray-600">
-                        <span class="w-2 h-2 rounded-full bg-green-500 mr-2 shadow-sm"></span>
+                <td class="px-6 py-4">
+                    <div class="flex items-center text-[11px] font-bold text-gray-500">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 shadow-sm"></span>
                         ${item.status_shipment}
                     </div>
                 </td>
@@ -115,11 +115,12 @@ function renderTable(data) {
     });
 }
 
-// Tambahkan listener ke semua input filter
+// Tambahkan Listener ke semua input (untuk filter real-time)
 ['search-input', 'filter-wilayah', 'filter-apo', 'filter-shipment'].forEach(id => {
-    document.getElementById(id).addEventListener('input', applyFilters);
-    document.getElementById(id).addEventListener('change', applyFilters);
+    const el = document.getElementById(id);
+    el.addEventListener('input', applyAllFilters);
+    el.addEventListener('change', applyAllFilters);
 });
 
-// Jalankan saat pertama kali dibuka
+// Jalankan saat load pertama
 fetchData();
