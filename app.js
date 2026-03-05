@@ -1,33 +1,41 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzrmhJ2rEGYVUpXz7rY-zR3TffAPJpt8vG5wF2yNRRXg4UkncrOUdIJPj-Y3J8o1gJR/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbyCTZbuO1QrQ8u3NfcfLS4-lVcH_rrcnpF7pIiRxUPhOk3vdzMKp6SSVZyooHYyvSQs/exec"; 
 let masterData = [];
 
 async function fetchData() {
+    const tableBody = document.getElementById('main-table-body');
+    const updateLabel = document.getElementById('gsheet-update');
+
     try {
         const response = await fetch(API_URL);
-        const res = await response.json();
+        const json = await response.json();
         
-        document.getElementById('gsheet-update').innerText = `Data Update: ${res.dataUpdate}`;
-        document.getElementById('status-text').innerText = "Online";
-        document.getElementById('status-text').classList.replace('text-slate-400', 'text-green-600');
+        if (json.error) {
+            tableBody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase tracking-widest italic">Error: ${json.error}</td></tr>`;
+            return;
+        }
+
+        masterData = json.data;
+        updateLabel.innerText = `Data Update: ${json.dataUpdate}`;
         
-        masterData = res.data;
-        
+        // Refresh Filter Dropdown
         setupDropdown('filter-wilayah', 'wilayah', 'Wilayah');
         setupDropdown('filter-apo', 'status_apo', 'APO');
         setupDropdown('filter-shipment', 'status_shipment', 'Shipment');
 
         applyFilters(); 
-    } catch (e) {
-        document.getElementById('gsheet-update').innerText = "Gagal Sinkron!";
-        console.error(e);
+    } catch (err) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase tracking-widest italic">Gagal Menghubungkan ke API. Periksa URL Deployment Anda.</td></tr>`;
+        console.error(err);
     }
 }
 
 function setupDropdown(id, key, label) {
     const dropdown = document.getElementById(id);
-    const values = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
+    const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
     dropdown.innerHTML = `<option value="">Semua ${label}</option>`;
-    values.forEach(v => dropdown.insertAdjacentHTML('beforeend', `<option value="${v}">${v}</option>`));
+    uniqueValues.forEach(val => {
+        dropdown.insertAdjacentHTML('beforeend', `<option value="${val}">${val}</option>`);
+    });
 }
 
 function applyFilters() {
@@ -52,25 +60,32 @@ function updateDashboard(data) {
     const cNew = data.filter(i => i.status_apo === 'NEW').length;
     const cProses = data.filter(i => i.status_apo === 'PROSES').length;
     const cPacking = data.filter(i => i.status_apo === 'PACKING').length;
+    const revenue = data.reduce((acc, curr) => acc + curr.revenue, 0);
 
     document.getElementById('stat-total').innerText = total;
     document.getElementById('stat-new').innerText = cNew;
     document.getElementById('stat-proses').innerText = cProses;
     document.getElementById('stat-packing').innerText = cPacking;
-
-    const getPerc = (n) => total > 0 ? ((n/total)*100).toFixed(1) + '%' : '0%';
-    document.getElementById('perc-new').innerText = getPerc(cNew);
-    document.getElementById('perc-proses').innerText = getPerc(cProses);
-    document.getElementById('perc-packing').innerText = getPerc(cPacking);
     
-    const rev = data.reduce((acc, curr) => acc + curr.revenue, 0);
-    document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(rev);
+    const getP = (n) => total > 0 ? ((n/total)*100).toFixed(1) + '%' : '0%';
+    document.getElementById('perc-new').innerText = getP(cNew);
+    document.getElementById('perc-proses').innerText = getP(cProses);
+    document.getElementById('perc-packing').innerText = getP(cPacking);
+    
+    document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(revenue);
 }
 
 function renderTable(data) {
     const tbody = document.getElementById('main-table-body');
     tbody.innerHTML = '';
-    const today = new Date(); today.setHours(0,0,0,0);
+    
+    if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-20 text-center font-bold text-slate-300 uppercase tracking-widest italic">Tidak Ada Data Ditemukan</td></tr>`;
+        return;
+    }
+
+    const today = new Date(); 
+    today.setHours(0,0,0,0);
 
     data.forEach(item => {
         let slaStr = "-", slaClass = "text-slate-400";
@@ -87,18 +102,23 @@ function renderTable(data) {
         const badge = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600' : (item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600');
 
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-slate-50 border-b border-slate-100">
-                <td class="px-6 py-4 font-black text-slate-800">${item.toko}<br><span class="text-[9px] text-blue-500 uppercase">${item.wilayah}</span></td>
+            <tr class="hover:bg-slate-50 transition-all">
+                <td class="px-6 py-4 font-black text-slate-800">
+                    ${item.toko}<br><span class="text-[9px] text-blue-500 font-black uppercase tracking-widest">${item.wilayah}</span>
+                </td>
                 <td class="px-6 py-4 font-semibold text-slate-600 uppercase">${item.nama}</td>
                 <td class="px-6 py-4 text-center font-mono text-slate-400">${item.no_pengiriman}</td>
-                <td class="px-6 py-4 text-center"><span class="px-2 py-0.5 rounded border font-black text-[9px] ${badge}">${item.status_apo}</span></td>
-                <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[10px]">${item.status_shipment}</td>
+                <td class="px-6 py-4 text-center">
+                    <span class="px-3 py-1 rounded-full border font-black text-[9px] ${badge}">${item.status_apo}</span>
+                </td>
+                <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[9px]">${item.status_shipment}</td>
                 <td class="px-6 py-4 text-center ${slaClass}">${slaStr}</td>
             </tr>
         `);
     });
 }
 
+// Listeners
 document.getElementById('search-input').addEventListener('input', applyFilters);
 document.getElementById('filter-wilayah').addEventListener('change', applyFilters);
 document.getElementById('filter-apo').addEventListener('change', applyFilters);
