@@ -15,7 +15,7 @@ async function fetchData() {
         if (resJson.error) throw new Error(resJson.error);
 
         // Update Label Sync (WITA)
-        updateLabel.innerText = `Sync: ${resJson.dataUpdate || 'Baru Saja'}`;
+        updateLabel.innerText = `Data Update: ${resJson.dataUpdate || 'Baru Saja'}`;
         statusText.innerText = "Online";
         statusText.className = "text-xs font-extrabold text-green-500 uppercase italic";
         
