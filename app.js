@@ -1,10 +1,10 @@
-const API_URL = "https://script.google.com/macros/s/AKfycby6zSTiRXwkE8RsNySzIC7Vns_pIeWYgbMVs4KInex4bFBQNxIjayaKLoi-qP6lqe8/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbwKhqPVHN60LD8DCHUB5VLHt9OQbtapGXyY-ppMyG54TDz1rW_bR_wOtGvNxz_6XkRW/exec"; 
 
 let masterData = [];
 
 async function fetchData() {
     const tbody = document.getElementById('main-table-body');
-    tbody.innerHTML = '<tr><td colspan="7" class="p-10 text-center font-bold text-blue-500 animate-pulse uppercase tracking-widest">Sinkronisasi Data...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="p-10 text-center font-bold text-blue-600 animate-pulse">SINKRONISASI DATA...</td></tr>';
 
     try {
         const response = await fetch(API_URL);
@@ -16,7 +16,7 @@ async function fetchData() {
 
         applyFilters();
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500">Error: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold">Gagal: Pastikan URL Web App Benar</td></tr>`;
     }
 }
 
@@ -28,19 +28,17 @@ function setupDropdown(id, key, label) {
 }
 
 function applyFilters() {
-    const searchVal = document.getElementById('search-input').value.toLowerCase();
-    const wilVal = document.getElementById('filter-wilayah').value;
-    const apoVal = document.getElementById('filter-apo').value;
-    const shipVal = document.getElementById('filter-shipment').value;
+    const sVal = document.getElementById('search-input').value.toLowerCase();
+    const wVal = document.getElementById('filter-wilayah').value;
+    const aVal = document.getElementById('filter-apo').value;
+    const hVal = document.getElementById('filter-shipment').value;
 
     const filtered = masterData.filter(item => {
-        const matchSearch = item.nama.toLowerCase().includes(searchVal) || 
-                            item.toko.toLowerCase().includes(searchVal) || 
-                            item.no_pengiriman.toLowerCase().includes(searchVal);
-        const matchWil = wilVal === "" || item.wilayah === wilVal;
-        const matchApo = apoVal === "" || item.status_apo === apoVal;
-        const matchShip = shipVal === "" || item.status_shipment === shipVal;
-        return matchSearch && matchWil && matchApo && matchShip;
+        const mSearch = item.nama.toLowerCase().includes(sVal) || item.toko.toLowerCase().includes(sVal) || item.no_pengiriman.toLowerCase().includes(sVal);
+        const mWil = wVal === "" || item.wilayah === wVal;
+        const mApo = aVal === "" || item.status_apo === aVal;
+        const mShip = hVal === "" || item.status_shipment === hVal;
+        return mSearch && mWil && mApo && mShip;
     });
 
     updateDashboard(filtered);
@@ -60,40 +58,31 @@ function renderTable(data) {
     const tbody = document.getElementById('main-table-body');
     tbody.innerHTML = '';
 
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-400 uppercase font-bold italic">Data Tidak Ditemukan</td></tr>';
-        return;
-    }
+    const hariIni = new Date();
+    hariIni.setHours(0,0,0,0);
 
     data.forEach(item => {
-        // Logika Hitung SLA
-        const hariIni = new Date();
-        hariIni.setHours(0,0,0,0);
-        
-        let tglKirimText = "-";
-        let slaText = "-";
-        let slaClass = "text-slate-300";
+        let tglTampilan = "-";
+        let slaTampilan = "-";
+        let slaColor = "text-slate-400";
 
         if (item.jadwal_kirim) {
             const jadwal = new Date(item.jadwal_kirim);
             jadwal.setHours(0,0,0,0);
             
-            // Format tampilan Tanggal
-            tglKirimText = jadwal.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            tglTampilan = jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
             
-            // Hitung Selisih
-            const diffTime = jadwal - hariIni;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const diff = Math.ceil((jadwal - hariIni) / (1000 * 60 * 60 * 24));
             
-            if (diffDays < 0) {
-                slaText = `${diffDays} Hr`;
-                slaClass = "text-red-600 font-black italic";
-            } else if (diffDays === 0) {
-                slaText = "HARI INI";
-                slaClass = "text-orange-500 font-black";
+            if (diff < 0) {
+                slaTampilan = `${diff} Hari`;
+                slaColor = "text-red-600 font-black italic";
+            } else if (diff === 0) {
+                slaTampilan = "HARI INI";
+                slaColor = "text-orange-500 font-bold";
             } else {
-                slaText = `+${diffDays} Hr`;
-                slaClass = "text-emerald-600 font-bold";
+                slaTampilan = `+${diff} Hari`;
+                slaColor = "text-emerald-600 font-bold";
             }
         }
 
@@ -101,24 +90,19 @@ function renderTable(data) {
                          item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100';
 
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-slate-50 transition-colors text-[11px] border-b border-slate-50">
+            <tr class="hover:bg-slate-50 border-b border-slate-100 text-[11px]">
                 <td class="px-6 py-4">
                     <div class="font-bold text-slate-800">${item.toko}</div>
-                    <div class="text-[9px] text-blue-500 font-black uppercase tracking-tighter">${item.wilayah}</div>
+                    <div class="text-[9px] text-blue-500 font-black uppercase">${item.wilayah}</div>
                 </td>
                 <td class="px-6 py-4 font-semibold text-slate-600 uppercase">${item.nama}</td>
                 <td class="px-6 py-4 text-center font-mono text-slate-400">${item.no_pengiriman}</td>
                 <td class="px-6 py-4 text-center">
                     <span class="px-2 py-0.5 rounded border font-black text-[9px] ${apoBadge}">${item.status_apo}</span>
                 </td>
-                <td class="px-6 py-4">
-                    <div class="flex items-center font-bold text-slate-400 text-[10px]">
-                        <span class="w-1 h-1 rounded-full bg-slate-300 mr-2"></span>
-                        ${item.status_shipment}
-                    </div>
-                </td>
-                <td class="px-6 py-4 text-center font-bold text-slate-700">${tglKirimText}</td>
-                <td class="px-6 py-4 text-center ${slaClass}">${slaText}</td>
+                <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[10px]">${item.status_shipment}</td>
+                <td class="px-6 py-4 text-center font-bold text-slate-700">${tglTampilan}</td>
+                <td class="px-6 py-4 text-center ${slaColor}">${slaTampilan}</td>
             </tr>
         `);
     });
