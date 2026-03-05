@@ -12,7 +12,7 @@ async function fetchData() {
         
         if (resJson.error) throw new Error(resJson.error);
 
-        // Update Header & Status
+        // Update Header & Status (Sync dengan WITA dari Backend)
         updateLabel.innerText = `Sync: ${resJson.dataUpdate || 'Baru Saja'}`;
         statusText.innerText = "Online";
         statusText.className = "text-xs font-extrabold text-green-500 uppercase italic";
@@ -94,8 +94,10 @@ function updateDashboard(data) {
 function renderTable(data) {
     const tbody = document.getElementById('main-table-body');
     tbody.innerHTML = '';
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    
+    // Set Waktu Sekarang ke 00:00:00 untuk perbandingan tanggal yang akurat
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     if (data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="p-20 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Data Tidak Ditemukan</td></tr>`;
@@ -106,34 +108,35 @@ function renderTable(data) {
         let slaStr = "-";
         let slaClass = "text-slate-400";
 
-        // Logika SLA
+        // Logika SLA menggunakan ISO String yang dikirim Backend
         if (item.jadwal_kirim) {
-            const jadwal = new Date(item.jadwal_kirim);
-            if (!isNaN(jadwal.getTime())) {
-                jadwal.setHours(0,0,0,0);
-                const diff = Math.ceil((jadwal - today) / (1000 * 60 * 60 * 24));
+            const jadwalDate = new Date(item.jadwal_kirim);
+            if (!isNaN(jadwalDate.getTime())) {
+                const jadwal = new Date(jadwalDate.getFullYear(), jadwalDate.getMonth(), jadwalDate.getDate());
                 
-                if (diff < 0) {
-                    slaStr = `${diff} HR`;
+                // Hitung selisih hari
+                const diffTime = jadwal - today;
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays < 0) {
+                    slaStr = `${diffDays} HR`;
                     slaClass = "text-red-600 font-black italic underline decoration-red-200 decoration-2";
-                } else if (diff === 0) {
+                } else if (diffDays === 0) {
                     slaStr = "HARI INI";
                     slaClass = "text-orange-500 font-black bg-orange-50 px-2 py-1 rounded-md";
                 } else {
-                    slaStr = `+${diff} HR`;
+                    slaStr = `+${diffDays} HR`;
                     slaClass = "text-emerald-600 font-extrabold";
                 }
             }
         }
 
-        // Color Badge Status APO
         const badge = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600 border-red-100' : 
                       item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600 border-orange-100' : 
                       'bg-emerald-50 text-emerald-600 border-emerald-100';
 
-        // Template baris dengan atribut data-label untuk responsif mobile
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="transition-all duration-200">
+            <tr class="transition-all duration-200 border-b border-slate-50 hover:bg-slate-50/50">
                 <td data-label="Toko & Wilayah" class="px-8 py-5">
                     <div class="flex flex-col">
                         <span class="font-extrabold text-slate-800 text-sm leading-tight">${item.toko}</span>
@@ -162,11 +165,11 @@ function renderTable(data) {
     });
 }
 
-// Listeners
+// Event Listeners
 document.getElementById('search-input').addEventListener('input', applyFilters);
 document.getElementById('filter-wilayah').addEventListener('change', applyFilters);
 document.getElementById('filter-apo').addEventListener('change', applyFilters);
 document.getElementById('filter-shipment').addEventListener('change', applyFilters);
 
-// Start
+// Inisialisasi
 fetchData();
