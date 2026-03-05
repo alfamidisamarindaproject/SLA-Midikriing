@@ -1,10 +1,9 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwKhqPVHN60LD8DCHUB5VLHt9OQbtapGXyY-ppMyG54TDz1rW_bR_wOtGvNxz_6XkRW/exec"; 
-
+const API_URL = "https://script.google.com/macros/s/AKfycbwROUAgHW5tZziTIGsmkkKJrnSf0fzEXsEXl0HmcA2e4jwesd_I7mRG6KDrD3E6Czl-/exec"; 
 let masterData = [];
 
 async function fetchData() {
     const tbody = document.getElementById('main-table-body');
-    tbody.innerHTML = '<tr><td colspan="7" class="p-10 text-center font-bold text-blue-600 animate-pulse">SINKRONISASI DATA...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="p-10 text-center font-bold text-blue-600 animate-pulse">MEMPROSES DATA...</td></tr>';
 
     try {
         const response = await fetch(API_URL);
@@ -16,7 +15,7 @@ async function fetchData() {
 
         applyFilters();
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold">Gagal: Pastikan URL Web App Benar</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold">Koneksi Gagal. Cek URL Deployment Anda.</td></tr>`;
     }
 }
 
@@ -31,13 +30,13 @@ function applyFilters() {
     const sVal = document.getElementById('search-input').value.toLowerCase();
     const wVal = document.getElementById('filter-wilayah').value;
     const aVal = document.getElementById('filter-apo').value;
-    const hVal = document.getElementById('filter-shipment').value;
+    const shVal = document.getElementById('filter-shipment').value;
 
     const filtered = masterData.filter(item => {
         const mSearch = item.nama.toLowerCase().includes(sVal) || item.toko.toLowerCase().includes(sVal) || item.no_pengiriman.toLowerCase().includes(sVal);
         const mWil = wVal === "" || item.wilayah === wVal;
         const mApo = aVal === "" || item.status_apo === aVal;
-        const mShip = hVal === "" || item.status_shipment === hVal;
+        const mShip = shVal === "" || item.status_shipment === shVal;
         return mSearch && mWil && mApo && mShip;
     });
 
@@ -62,27 +61,27 @@ function renderTable(data) {
     hariIni.setHours(0,0,0,0);
 
     data.forEach(item => {
-        let tglTampilan = "-";
-        let slaTampilan = "-";
-        let slaColor = "text-slate-400";
+        let tglTampil = "-";
+        let slaTampil = "-";
+        let slaStyle = "text-slate-400";
 
         if (item.jadwal_kirim) {
             const jadwal = new Date(item.jadwal_kirim);
             jadwal.setHours(0,0,0,0);
             
-            tglTampilan = jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
+            tglTampil = jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
             
             const diff = Math.ceil((jadwal - hariIni) / (1000 * 60 * 60 * 24));
             
             if (diff < 0) {
-                slaTampilan = `${diff} Hari`;
-                slaColor = "text-red-600 font-black italic";
+                slaTampil = `${diff} Hr`;
+                slaStyle = "text-red-600 font-black italic";
             } else if (diff === 0) {
                 slaTampilan = "HARI INI";
-                slaColor = "text-orange-500 font-bold";
+                slaStyle = "text-orange-500 font-bold";
             } else {
-                slaTampilan = `+${diff} Hari`;
-                slaColor = "text-emerald-600 font-bold";
+                slaTampil = `+${diff} Hr`;
+                slaStyle = "text-emerald-600 font-bold";
             }
         }
 
@@ -101,14 +100,14 @@ function renderTable(data) {
                     <span class="px-2 py-0.5 rounded border font-black text-[9px] ${apoBadge}">${item.status_apo}</span>
                 </td>
                 <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[10px]">${item.status_shipment}</td>
-                <td class="px-6 py-4 text-center font-bold text-slate-700">${tglTampilan}</td>
-                <td class="px-6 py-4 text-center ${slaColor}">${slaTampilan}</td>
+                <td class="px-6 py-4 text-center font-bold text-slate-700">${tglTampil}</td>
+                <td class="px-6 py-4 text-center ${slaStyle}">${slaTampil}</td>
             </tr>
         `);
     });
 }
 
-// Event Listeners
+// Listeners
 document.getElementById('search-input').addEventListener('input', applyFilters);
 document.getElementById('filter-wilayah').addEventListener('change', applyFilters);
 document.getElementById('filter-apo').addEventListener('change', applyFilters);
