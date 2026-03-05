@@ -7,16 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-slate-50 min-h-screen">
     <div class="container mx-auto px-4 py-6">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-            <h1 class="text-2xl font-black text-gray-800 uppercase italic">SLA <span class="text-blue-600">Monitoring</span></h1>
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-2xl font-black text-slate-800 italic uppercase">SLA <span class="text-blue-600">Monitoring</span></h1>
             <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-xl shadow-md transition active:scale-95">
                 <i class="fas fa-sync-alt mr-2"></i> REFRESH DATA
             </button>
         </div>
 
-        <div id="stat-container" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
             <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-slate-400">
                 <p class="text-[9px] font-black text-slate-400 uppercase">Total Pending</p>
                 <h2 id="stat-total" class="text-2xl font-black text-gray-800">0</h2>
@@ -40,28 +40,28 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
-            <input type="text" id="search-input" placeholder="Cari Nama/No..." class="p-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-            <select id="filter-wilayah" class="p-2.5 rounded-xl border border-gray-200 bg-white text-sm"></select>
-            <select id="filter-apo" class="p-2.5 rounded-xl border border-gray-200 bg-white text-sm font-bold"></select>
-            <select id="filter-shipment" class="p-2.5 rounded-xl border border-gray-200 bg-white text-sm"></select>
+            <input type="text" id="search-input" placeholder="Cari Nama/No..." class="p-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <select id="filter-wilayah" class="p-2.5 rounded-xl border border-slate-200 bg-white text-sm"></select>
+            <select id="filter-apo" class="p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-bold"></select>
+            <select id="filter-shipment" class="p-2.5 rounded-xl border border-slate-200 bg-white text-sm"></select>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div id="loading-state" class="hidden py-20 text-center text-blue-500 font-bold">MENGAMBIL DATA...</div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
-                    <thead class="bg-gray-50 border-b">
-                        <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <thead class="bg-slate-50 border-b">
+                        <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                             <th class="px-6 py-4">Toko / Wilayah</th>
                             <th class="px-6 py-4">Penerima</th>
-                            <th class="px-6 py-4">No Pengiriman</th>
+                            <th class="px-6 py-4 text-center">No Pengiriman</th>
                             <th class="px-6 py-4 text-center">Status APO</th>
-                            <th class="px-6 py-4">Shipment</th>
-                            <th class="px-6 py-4">Jadwal Kirim</th>
-                            <th class="px-6 py-4 text-center text-red-500">SLA (Hari)</th>
+                            <th class="px-6 py-4">Status Shipment</th>
+                            <th class="px-6 py-4 text-center">Jadwal Kirim</th>
+                            <th class="px-6 py-4 text-center">SLA</th>
                         </tr>
                     </thead>
-                    <tbody id="main-table-body" class="divide-y divide-gray-50"></tbody>
+                    <tbody id="main-table-body" class="divide-y divide-slate-100 italic">
+                        </tbody>
                 </table>
             </div>
         </div>
