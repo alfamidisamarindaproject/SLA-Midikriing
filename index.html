@@ -3,69 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SLA Monitoring Midikriing</title>
+    <title>Dashboard SLA Midikriing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-slate-100 min-h-screen font-sans">
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+<body class="bg-slate-50 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <div>
-                <h1 class="text-3xl font-black text-slate-800 tracking-tighter">MONITORING <span class="text-blue-600">SLA</span></h1>
-                <p id="last-update" class="text-xs text-slate-400 font-bold uppercase mt-1 italic">Status: Sinkronkan Data...</p>
+                <h1 class="text-2xl font-black text-slate-800 uppercase italic">SLA <span class="text-blue-600">Monitoring</span></h1>
+                <p id="last-update" class="text-[10px] text-slate-400 font-bold uppercase mt-1">Status: Menunggu Sinkronisasi...</p>
             </div>
-            <button onclick="fetchData()" class="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition active:scale-95">
-                <i class="fas fa-sync-alt mr-2"></i> REFRESH DATA
+            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-xl shadow-md transition active:scale-95">
+                <i class="fas fa-sync-alt mr-2"></i> REFRESH
             </button>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-slate-400">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Pending</p>
-                <h2 id="stat-total" class="text-3xl font-black text-slate-800">0</h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-slate-400">
+                <p class="text-[9px] font-black text-slate-400 uppercase">Total Pending</p>
+                <h2 id="stat-total" class="text-2xl font-black text-slate-800">0</h2>
             </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-red-500">
-                <p class="text-[10px] font-bold text-red-500 uppercase tracking-widest">NEW</p>
-                <h2 id="stat-new" class="text-3xl font-black text-red-600">0</h2>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-red-500">
+                <p class="text-[9px] font-black text-red-500 uppercase">NEW</p>
+                <h2 id="stat-new" class="text-2xl font-black text-red-600">0</h2>
             </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-orange-500">
-                <p class="text-[10px] font-bold text-orange-500 uppercase tracking-widest">PROSES</p>
-                <h2 id="stat-proses" class="text-3xl font-black text-orange-600">0</h2>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-orange-500">
+                <p class="text-[9px] font-black text-orange-500 uppercase">PROSES</p>
+                <h2 id="stat-proses" class="text-2xl font-black text-orange-600">0</h2>
             </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-emerald-500">
-                <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">PACKING</p>
-                <h2 id="stat-packing" class="text-3xl font-black text-emerald-600">0</h2>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-emerald-500">
+                <p class="text-[9px] font-black text-emerald-500 uppercase">PACKING</p>
+                <h2 id="stat-packing" class="text-2xl font-black text-emerald-600">0</h2>
             </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-blue-600 col-span-2 md:col-span-1">
-                <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Revenue</p>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-600 col-span-2 md:col-span-1">
+                <p class="text-[9px] font-black text-blue-600 uppercase">Revenue</p>
                 <h2 id="stat-revenue" class="text-xl font-black text-slate-800">Rp 0</h2>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm mb-8 border border-slate-200">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <input type="text" id="search-input" placeholder="Cari Nama / Toko..." class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                <select id="filter-wilayah" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"></select>
-                <select id="filter-apo" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold"></select>
-                <select id="filter-shipment" class="p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"></select>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+            <input type="text" id="search-input" placeholder="Cari Nama/No Pengiriman..." class="p-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <select id="filter-wilayah" class="p-2.5 rounded-xl border border-slate-200 bg-white text-sm"></select>
+            <select id="filter-apo" class="p-2.5 rounded-xl border border-slate-200 bg-white text-sm font-bold"></select>
+            <select id="filter-shipment" class="p-2.5 rounded-xl border border-slate-200 bg-white text-sm"></select>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div id="loading-state" class="hidden py-20 text-center">
-                <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
-                <p class="text-slate-400 font-bold mt-4 tracking-widest uppercase">MENGAMBIL DATA...</p>
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left">
                     <thead class="bg-slate-50 border-b border-slate-100">
                         <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                             <th class="px-6 py-4">Toko / Wilayah</th>
                             <th class="px-6 py-4">Penerima</th>
+                            <th class="px-6 py-4">No Pengiriman</th>
+                            <th class="px-6 py-4 text-center">Status APO</th>
+                            <th class="px-6 py-4">Status Shipment</th>
                             <th class="px-6 py-4">Jadwal Kirim</th>
                             <th class="px-6 py-4 text-center">SLA</th>
-                            <th class="px-6 py-4 text-center">Status APO</th>
-                            <th class="px-6 py-4">Shipment</th>
                         </tr>
                     </thead>
                     <tbody id="main-table-body" class="divide-y divide-slate-50"></tbody>
