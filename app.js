@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwI9qHOjxXvDrCGBHyp6IALxPI1v4bcnWRV-_OkWH7x5qfhTXwvExbAV9qGJq2NS94/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxUXD4OZX0EaSZdaTXgLX6YOQDOC_-W4cyfZhd_TedOfmgLDJXzX_RG3GRfJmWDX1nJ/exec"; 
 let masterData = [];
 
 async function fetchData() {
@@ -12,25 +12,21 @@ async function fetchData() {
         
         if (resJson.error) throw new Error(resJson.error);
 
-        // Update Label Header
         updateLabel.innerText = `Data Update: ${resJson.dataUpdate}`;
         statusText.innerText = "Online";
         statusText.className = "text-xs font-bold text-green-600 uppercase";
         
         masterData = resJson.data;
         
-        // Setup Filter Dropdown
         setupDropdown('filter-wilayah', 'wilayah', 'Wilayah');
         setupDropdown('filter-apo', 'status_apo', 'APO');
         setupDropdown('filter-shipment', 'status_shipment', 'Shipment');
 
         applyFilters(); 
     } catch (e) {
-        console.error(e);
         updateLabel.innerText = "Gagal Sinkron!";
         statusText.innerText = "Offline";
-        statusText.className = "text-xs font-bold text-red-600 uppercase";
-        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase italic">Error: Gagal memuat data</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase italic">Error Koneksi ke Google Sheets</td></tr>`;
     }
 }
 
@@ -75,7 +71,6 @@ function updateDashboard(data) {
     document.getElementById('stat-proses').innerText = cProses;
     document.getElementById('stat-packing').innerText = cPacking;
 
-    // Hitung Persentase
     const calc = (n) => total > 0 ? ((n/total)*100).toFixed(1) + '%' : '0%';
     document.getElementById('perc-new').innerText = calc(cNew);
     document.getElementById('perc-proses').innerText = calc(cProses);
@@ -88,22 +83,21 @@ function updateDashboard(data) {
 function renderTable(data) {
     const tbody = document.getElementById('main-table-body');
     tbody.innerHTML = '';
-    const hariIni = new Date();
-    hariIni.setHours(0,0,0,0);
+    const skrg = new Date();
+    skrg.setHours(0,0,0,0);
 
     data.forEach(item => {
         let tglStr = "-";
         let slaStr = "-";
         let slaClass = "text-slate-400";
 
-        // Pastikan Jadwal Kirim ada dan Valid
         if (item.jadwal_kirim) {
             const jadwal = new Date(item.jadwal_kirim);
             if (!isNaN(jadwal.getTime())) {
                 jadwal.setHours(0,0,0,0);
                 tglStr = jadwal.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
                 
-                const diff = Math.ceil((jadwal - hariIni) / (1000 * 60 * 60 * 24));
+                const diff = Math.ceil((jadwal - skrg) / (1000 * 60 * 60 * 24));
                 if (diff < 0) {
                     slaStr = `${diff} Hr`;
                     slaClass = "text-red-600 font-black italic";
@@ -117,15 +111,15 @@ function renderTable(data) {
             }
         }
 
-        const apoBadge = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600' : 
-                         item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600';
+        const badge = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600' : 
+                      item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600';
 
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-slate-50 text-[11px] border-b border-slate-100 transition-all">
-                <td class="px-6 py-4 font-black text-slate-800">${item.toko}<br><span class="text-[9px] text-blue-500 italic font-black uppercase">${item.wilayah}</span></td>
+            <tr class="hover:bg-slate-50 text-[11px] border-b border-slate-100 italic transition-all">
+                <td class="px-6 py-4 font-black text-slate-800">${item.toko}<br><span class="text-[9px] text-blue-500 font-black uppercase">${item.wilayah}</span></td>
                 <td class="px-6 py-4 font-semibold text-slate-600 uppercase">${item.nama}</td>
                 <td class="px-6 py-4 text-center font-mono text-slate-400 italic">${item.no_pengiriman}</td>
-                <td class="px-6 py-4 text-center"><span class="px-2 py-0.5 rounded border font-black text-[9px] ${apoBadge}">${item.status_apo}</span></td>
+                <td class="px-6 py-4 text-center"><span class="px-2 py-0.5 rounded border font-black text-[9px] ${badge}">${item.status_apo}</span></td>
                 <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[10px] italic">${item.status_shipment}</td>
                 <td class="px-6 py-4 text-center font-bold text-slate-700">${tglStr}</td>
                 <td class="px-6 py-4 text-center ${slaClass}">${slaStr}</td>
@@ -134,7 +128,6 @@ function renderTable(data) {
     });
 }
 
-// Event Listeners
 document.getElementById('search-input').addEventListener('input', applyFilters);
 document.getElementById('filter-wilayah').addEventListener('change', applyFilters);
 document.getElementById('filter-apo').addEventListener('change', applyFilters);
