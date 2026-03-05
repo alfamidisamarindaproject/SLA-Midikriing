@@ -3,70 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SLA Monitoring Midikriing</title>
+    <title>Monitoring SLA Midikriing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-slate-50 min-h-screen">
-    <div class="container mx-auto px-4 py-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+<body class="bg-gray-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-slate-800">Monitoring Pesanan <span class="text-blue-600">Midikriing</span></h1>
-                <p id="last-update" class="text-xs text-slate-500 italic">Memuat...</p>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Dashboard <span class="text-blue-600">Monitoring</span></h1>
+                <p id="last-update" class="text-sm text-gray-500 italic font-medium">Menunggu sinkronisasi...</p>
             </div>
-            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition shadow-sm font-bold">
-                <i class="fas fa-sync-alt mr-2"></i> Sinkron Data Sekarang
+            <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95">
+                <i class="fas fa-sync-alt mr-2"></i> Sinkron Data
             </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <p class="text-slate-500 text-xs font-semibold uppercase italic">Total Terfilter</p>
-                <h2 id="stat-total" class="text-3xl font-black text-slate-800">-</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-500">
+                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">Total Belum Terkirim</p>
+                <h2 id="stat-total" class="text-4xl font-black text-gray-800">0</h2>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <p class="text-orange-500 text-xs font-semibold uppercase italic">Proses/Packing Terfilter</p>
-                <h2 id="stat-proses" class="text-3xl font-black text-orange-500">-</h2>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-500">
+                <p class="text-orange-600 text-xs font-bold uppercase tracking-widest mb-1">Dalam Proses / Packing</p>
+                <h2 id="stat-proses" class="text-4xl font-black text-orange-600">0</h2>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <p class="text-emerald-600 text-xs font-semibold uppercase italic">Revenue Terfilter</p>
-                <h2 id="stat-revenue" class="text-3xl font-black text-emerald-600">-</h2>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-500">
+                <p class="text-green-600 text-xs font-bold uppercase tracking-widest mb-1">Estimasi Revenue</p>
+                <h2 id="stat-revenue" class="text-4xl font-black text-green-600">Rp 0</h2>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <input type="text" id="search-input" placeholder="Cari nama/no pengiriman..." class="p-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
-            
-            <select id="filter-wilayah" class="p-2 rounded-lg border border-slate-300 bg-white shadow-sm">
-                <option value="">Semua Wilayah</option>
-            </select>
-
-            <select id="filter-apo" class="p-2 rounded-lg border border-slate-300 bg-white shadow-sm font-semibold">
-                <option value="">Semua Status APO</option>
-            </select>
-
-            <select id="filter-shipment" class="p-2 rounded-lg border border-slate-300 bg-white shadow-sm text-xs">
-                <option value="">Semua Status Shipment</option>
-            </select>
+        <div class="bg-white p-6 rounded-2xl shadow-sm mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Cari Data</label>
+                    <input type="text" id="search-input" placeholder="Nama / Toko / No..." class="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Wilayah</label>
+                    <select id="filter-wilayah" class="w-full p-3 rounded-xl border border-gray-200 bg-white outline-none focus:ring-2 focus:ring-blue-500"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Status APO</label>
+                    <select id="filter-apo" class="w-full p-3 rounded-xl border border-gray-200 bg-white outline-none focus:ring-2 focus:ring-blue-500"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Shipment Status</label>
+                    <select id="filter-shipment" class="w-full p-3 rounded-xl border border-gray-200 bg-white outline-none focus:ring-2 focus:ring-blue-500"></select>
+                </div>
+            </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div id="loading-state" class="hidden p-10 text-center font-medium text-slate-500">
-                <i class="fas fa-circle-notch animate-spin mr-2"></i> Mengambil data gsheet...
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div id="loading-state" class="hidden py-20 text-center">
+                <i class="fas fa-spinner animate-spin text-4xl text-blue-500 mb-4"></i>
+                <p class="text-gray-500 font-bold">Mengunduh data terbaru...</p>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-600 text-[10px] uppercase font-bold tracking-widest">
-                            <th class="p-4 border-b">Toko / Wilayah</th>
-                            <th class="p-4 border-b">Penerima</th>
-                            <th class="p-4 border-b">No. Pengiriman</th>
-                            <th class="p-4 border-b text-center">APO</th>
-                            <th class="p-4 border-b">Status Shipment</th>
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr class="text-gray-400 text-[10px] font-bold uppercase tracking-tighter">
+                            <th class="p-5">Toko & Wilayah</th>
+                            <th class="p-5">Nama Penerima</th>
+                            <th class="p-5">No. Pengiriman</th>
+                            <th class="p-5 text-center">Status APO</th>
+                            <th class="p-5">Shipment</th>
                         </tr>
                     </thead>
-                    <tbody id="main-table-body" class="divide-y divide-slate-100">
-                    </tbody>
+                    <tbody id="main-table-body" class="divide-y divide-gray-50"></tbody>
                 </table>
             </div>
         </div>
