@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyNwH-FsSlbZkBtZGtDGhquUd1RpnJSXhSKWYPA2Vyc2sLkF4YiT3pN-2a_AHXXYFxE/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycby98QrROx7vZ4wgb8nHqdGPyy07ROfSdt2vfMwRhi447_bbDlXlgldTUwmAORSCglhv/exec"; 
 let masterData = [];
 
 async function fetchData() {
