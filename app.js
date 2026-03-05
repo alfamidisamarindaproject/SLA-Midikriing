@@ -1,22 +1,16 @@
-const API_URL = "https://script.google.com/macros/s/AKfycby9OiuTcYWDmF-CgKQP3sx8XC_jeS897K2HIHbKliGXIo9t0g5qkpjBhSGhyp2j1vRS/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbzrmhJ2rEGYVUpXz7rY-zR3TffAPJpt8vG5wF2yNRRXg4UkncrOUdIJPj-Y3J8o1gJR/exec"; 
 let masterData = [];
 
 async function fetchData() {
-    const updateLabel = document.getElementById('gsheet-update');
-    const statusText = document.getElementById('status-text');
-    const tbody = document.getElementById('main-table-body');
-
     try {
         const response = await fetch(API_URL);
-        const resJson = await response.json();
+        const res = await response.json();
         
-        if (resJson.error) throw new Error(resJson.error);
-
-        updateLabel.innerText = `Data Update: ${resJson.dataUpdate}`;
-        statusText.innerText = "Online";
-        statusText.className = "text-xs font-bold text-green-600 uppercase italic";
+        document.getElementById('gsheet-update').innerText = `Data Update: ${res.dataUpdate}`;
+        document.getElementById('status-text').innerText = "Online";
+        document.getElementById('status-text').classList.replace('text-slate-400', 'text-green-600');
         
-        masterData = resJson.data;
+        masterData = res.data;
         
         setupDropdown('filter-wilayah', 'wilayah', 'Wilayah');
         setupDropdown('filter-apo', 'status_apo', 'APO');
@@ -24,37 +18,29 @@ async function fetchData() {
 
         applyFilters(); 
     } catch (e) {
-        updateLabel.innerText = "Gagal Sinkron!";
-        statusText.innerText = "Offline";
-        statusText.className = "text-xs font-bold text-red-600 uppercase italic";
-        tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-red-500 font-bold uppercase italic">Error: Koneksi Gagal</td></tr>`;
+        document.getElementById('gsheet-update').innerText = "Gagal Sinkron!";
+        console.error(e);
     }
 }
 
 function setupDropdown(id, key, label) {
     const dropdown = document.getElementById(id);
-    if (!dropdown) return;
-    const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
+    const values = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
     dropdown.innerHTML = `<option value="">Semua ${label}</option>`;
-    uniqueValues.forEach(val => {
-        dropdown.insertAdjacentHTML('beforeend', `<option value="${val}">${val}</option>`);
-    });
+    values.forEach(v => dropdown.insertAdjacentHTML('beforeend', `<option value="${v}">${v}</option>`));
 }
 
 function applyFilters() {
-    const sVal = document.getElementById('search-input').value.toLowerCase();
-    const wVal = document.getElementById('filter-wilayah').value;
-    const aVal = document.getElementById('filter-apo').value;
-    const shVal = document.getElementById('filter-shipment').value;
+    const s = document.getElementById('search-input').value.toLowerCase();
+    const w = document.getElementById('filter-wilayah').value;
+    const a = document.getElementById('filter-apo').value;
+    const sh = document.getElementById('filter-shipment').value;
 
-    const filtered = masterData.filter(item => {
-        const mSearch = (item.nama || "").toLowerCase().includes(sVal) || 
-                        (item.toko || "").toLowerCase().includes(sVal) || 
-                        (item.no_pengiriman || "").toLowerCase().includes(sVal);
-        const mWil = wVal === "" || item.wilayah === wVal;
-        const mApo = aVal === "" || item.status_apo === aVal;
-        const mShip = shVal === "" || item.status_shipment === shVal;
-        return mSearch && mWil && mApo && mShip;
+    const filtered = masterData.filter(i => {
+        return (i.nama.toLowerCase().includes(s) || i.toko.toLowerCase().includes(s) || i.no_pengiriman.toLowerCase().includes(s)) &&
+               (w === "" || i.wilayah === w) &&
+               (a === "" || i.status_apo === a) &&
+               (sh === "" || i.status_shipment === sh);
     });
 
     updateDashboard(filtered);
@@ -72,10 +58,10 @@ function updateDashboard(data) {
     document.getElementById('stat-proses').innerText = cProses;
     document.getElementById('stat-packing').innerText = cPacking;
 
-    const calc = (n) => total > 0 ? ((n/total)*100).toFixed(1) + '%' : '0%';
-    document.getElementById('perc-new').innerText = calc(cNew);
-    document.getElementById('perc-proses').innerText = calc(cProses);
-    document.getElementById('perc-packing').innerText = calc(cPacking);
+    const getPerc = (n) => total > 0 ? ((n/total)*100).toFixed(1) + '%' : '0%';
+    document.getElementById('perc-new').innerText = getPerc(cNew);
+    document.getElementById('perc-proses').innerText = getPerc(cProses);
+    document.getElementById('perc-packing').innerText = getPerc(cPacking);
     
     const rev = data.reduce((acc, curr) => acc + curr.revenue, 0);
     document.getElementById('stat-revenue').innerText = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(rev);
@@ -84,46 +70,28 @@ function updateDashboard(data) {
 function renderTable(data) {
     const tbody = document.getElementById('main-table-body');
     tbody.innerHTML = '';
-    const skrg = new Date();
-    skrg.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0,0,0,0);
 
     data.forEach(item => {
-        let slaStr = "-";
-        let slaClass = "text-slate-400 font-bold";
-
+        let slaStr = "-", slaClass = "text-slate-400";
         if (item.jadwal_kirim) {
             const jadwal = new Date(item.jadwal_kirim);
-            if (!isNaN(jadwal.getTime())) {
-                jadwal.setHours(0,0,0,0);
-                const diff = Math.ceil((jadwal - skrg) / (1000 * 60 * 60 * 24));
-                
-                if (diff < 0) {
-                    slaStr = `${diff} Hr`;
-                    slaClass = "text-red-600 font-black italic";
-                } else if (diff === 0) {
-                    slaStr = "HARI INI";
-                    slaClass = "text-orange-500 font-black";
-                } else {
-                    slaStr = `+${diff} Hr`;
-                    slaClass = "text-emerald-600 font-bold";
-                }
-            }
+            jadwal.setHours(0,0,0,0);
+            const diff = Math.ceil((jadwal - today) / (1000 * 60 * 60 * 24));
+            
+            if (diff < 0) { slaStr = `${diff} Hr`; slaClass = "text-red-600 font-black"; }
+            else if (diff === 0) { slaStr = "HARI INI"; slaClass = "text-orange-500 font-black"; }
+            else { slaStr = `+${diff} Hr`; slaClass = "text-emerald-600 font-bold"; }
         }
 
-        const badge = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600' : 
-                      item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600';
+        const badge = item.status_apo === 'NEW' ? 'bg-red-50 text-red-600' : (item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600');
 
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-slate-50 text-[11px] border-b border-slate-100 italic transition-all">
-                <td class="px-6 py-4 font-black text-slate-800">
-                    ${item.toko}<br>
-                    <span class="text-[9px] text-blue-500 font-black uppercase">${item.wilayah}</span>
-                </td>
+            <tr class="hover:bg-slate-50 border-b border-slate-100">
+                <td class="px-6 py-4 font-black text-slate-800">${item.toko}<br><span class="text-[9px] text-blue-500 uppercase">${item.wilayah}</span></td>
                 <td class="px-6 py-4 font-semibold text-slate-600 uppercase">${item.nama}</td>
                 <td class="px-6 py-4 text-center font-mono text-slate-400">${item.no_pengiriman}</td>
-                <td class="px-6 py-4 text-center">
-                    <span class="px-2 py-0.5 rounded border font-black text-[9px] ${badge}">${item.status_apo}</span>
-                </td>
+                <td class="px-6 py-4 text-center"><span class="px-2 py-0.5 rounded border font-black text-[9px] ${badge}">${item.status_apo}</span></td>
                 <td class="px-6 py-4 font-bold text-slate-400 uppercase text-[10px]">${item.status_shipment}</td>
                 <td class="px-6 py-4 text-center ${slaClass}">${slaStr}</td>
             </tr>
