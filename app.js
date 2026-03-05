@@ -23,8 +23,8 @@ async function fetchData() {
         
         // Buat Dropdown Filter secara dinamis
         setupDropdown('filter-wilayah', 'wilayah', 'Wilayah');
-        setupDropdown('filter-apo', 'status_apo', 'APO');
-        setupDropdown('filter-shipment', 'status_shipment', 'Shipment');
+        setupDropdown('filter-apo', 'status_apo', 'Status APO');
+        setupDropdown('filter-shipment', 'status_shipment', 'Status Shipment');
 
         applyFilters(); 
     } catch (e) {
@@ -40,7 +40,7 @@ function setupDropdown(id, key, label) {
     const dropdown = document.getElementById(id);
     if (!dropdown) return;
     const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
-    dropdown.innerHTML = `<option value="">Semua ${label}</option>`;
+    dropdown.innerHTML = `<option value="">All ${label}</option>`;
     uniqueValues.forEach(val => {
         dropdown.insertAdjacentHTML('beforeend', `<option value="${val}">${val}</option>`);
     });
