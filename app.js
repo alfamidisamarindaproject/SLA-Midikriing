@@ -1,21 +1,67 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxFQe4102qUozonXFcXOmGeyiIf1Da46sWZH3H4ittZ1A4qg5xApiAduEWmJFEsb_0B/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbwI9qHOjxXvDrCGBHyp6IALxPI1v4bcnWRV-_OkWH7x5qfhTXwvExbAV9qGJq2NS94/exec"; 
 let masterData = [];
 
 async function fetchData() {
     const updateLabel = document.getElementById('gsheet-update');
+    const statusText = document.getElementById('status-text');
+    const tbody = document.getElementById('main-table-body');
+
     try {
         const response = await fetch(API_URL);
         const resJson = await response.json();
+        
+        if (resJson.error) throw new Error(resJson.error);
+
+        // Update Label Header
         updateLabel.innerText = `Data Update: ${resJson.dataUpdate}`;
+        statusText.innerText = "Online";
+        statusText.className = "text-xs font-bold text-green-600 uppercase";
+        
         masterData = resJson.data;
         
+        // Setup Filter Dropdown
         setupDropdown('filter-wilayah', 'wilayah', 'Wilayah');
         setupDropdown('filter-apo', 'status_apo', 'APO');
         setupDropdown('filter-shipment', 'status_shipment', 'Shipment');
+
         applyFilters(); 
     } catch (e) {
-        updateLabel.innerText = "Gagal Sinkronisasi!";
+        console.error(e);
+        updateLabel.innerText = "Gagal Sinkron!";
+        statusText.innerText = "Offline";
+        statusText.className = "text-xs font-bold text-red-600 uppercase";
+        tbody.innerHTML = `<tr><td colspan="7" class="p-10 text-center text-red-500 font-bold uppercase italic">Error: Gagal memuat data</td></tr>`;
     }
+}
+
+function setupDropdown(id, key, label) {
+    const dropdown = document.getElementById(id);
+    if (!dropdown) return;
+    const uniqueValues = [...new Set(masterData.map(item => item[key]))].filter(Boolean).sort();
+    dropdown.innerHTML = `<option value="">Semua ${label}</option>`;
+    uniqueValues.forEach(val => {
+        dropdown.insertAdjacentHTML('beforeend', `<option value="${val}">${val}</option>`);
+    });
+}
+
+function applyFilters() {
+    const sVal = document.getElementById('search-input').value.toLowerCase();
+    const wVal = document.getElementById('filter-wilayah').value;
+    const aVal = document.getElementById('filter-apo').value;
+    const shVal = document.getElementById('filter-shipment').value;
+
+    const filtered = masterData.filter(item => {
+        const mSearch = (item.nama || "").toLowerCase().includes(sVal) || 
+                        (item.toko || "").toLowerCase().includes(sVal) || 
+                        (item.no_pengiriman || "").toLowerCase().includes(sVal);
+        const mWil = wVal === "" || item.wilayah === wVal;
+        const mApo = aVal === "" || item.status_apo === aVal;
+        const mShip = shVal === "" || item.status_shipment === shVal;
+        return mSearch && mWil && mApo && mShip;
+    });
+
+    updateDashboard(filtered);
+    renderTable(filtered);
 }
 
 function updateDashboard(data) {
@@ -29,7 +75,7 @@ function updateDashboard(data) {
     document.getElementById('stat-proses').innerText = cProses;
     document.getElementById('stat-packing').innerText = cPacking;
 
-    // Menampilkan Persentase
+    // Hitung Persentase
     const calc = (n) => total > 0 ? ((n/total)*100).toFixed(1) + '%' : '0%';
     document.getElementById('perc-new').innerText = calc(cNew);
     document.getElementById('perc-proses').innerText = calc(cProses);
@@ -50,6 +96,7 @@ function renderTable(data) {
         let slaStr = "-";
         let slaClass = "text-slate-400";
 
+        // Pastikan Jadwal Kirim ada dan Valid
         if (item.jadwal_kirim) {
             const jadwal = new Date(item.jadwal_kirim);
             if (!isNaN(jadwal.getTime())) {
@@ -74,7 +121,7 @@ function renderTable(data) {
                          item.status_apo === 'PROSES' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600';
 
         tbody.insertAdjacentHTML('beforeend', `
-            <tr class="hover:bg-slate-50 text-[11px] border-b border-slate-100">
+            <tr class="hover:bg-slate-50 text-[11px] border-b border-slate-100 transition-all">
                 <td class="px-6 py-4 font-black text-slate-800">${item.toko}<br><span class="text-[9px] text-blue-500 italic font-black uppercase">${item.wilayah}</span></td>
                 <td class="px-6 py-4 font-semibold text-slate-600 uppercase">${item.nama}</td>
                 <td class="px-6 py-4 text-center font-mono text-slate-400 italic">${item.no_pengiriman}</td>
@@ -86,5 +133,11 @@ function renderTable(data) {
         `);
     });
 }
-// ... fungsi applyFilters & setupDropdown sama dengan sebelumnya ...
+
+// Event Listeners
+document.getElementById('search-input').addEventListener('input', applyFilters);
+document.getElementById('filter-wilayah').addEventListener('change', applyFilters);
+document.getElementById('filter-apo').addEventListener('change', applyFilters);
+document.getElementById('filter-shipment').addEventListener('change', applyFilters);
+
 fetchData();
